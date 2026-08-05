@@ -26,7 +26,7 @@ const localData = {
 // Helper to fetch one resource from the Apps Script web app.
 async function fetchResource(resource) {
   try {
-    // Cache-bust each request so the browser asks for fresh sheet data.
+    // Cache-bust each request so the browser pulls for fresh sheet data.
     const url = `${APPS_SCRIPT_URL}?resource=${resource}&_=${Date.now()}`;
     const response = await fetch(url, { cache: 'no-store' });
 

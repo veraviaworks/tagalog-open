@@ -54,7 +54,7 @@ function renderShell(settings = {}) {
   const pageTitle = pageTitles[page];
   document.title = pageTitle ? `${pageTitle} | ${siteName}` : `${siteName} | City of Los Santos`;
 
-  // The header and footer are not repeated manually in every HTML page.
+  // DVB NOTE - The header and footer are not repeated manually in every HTML page.
   // Instead, this function injects the shared site layout into placeholder divs.
   header.innerHTML = `
     <a class="skip-link" href="#main">Skip to content</a>

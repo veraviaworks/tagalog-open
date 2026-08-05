@@ -389,7 +389,7 @@ export const rules = [
   },
 ];
 
-// DVB Placeholder winners used on the home page until the event is finishe
+// DVB Placeholder winners used on the homepage until the event is finishe
 export const winners = {
   concluded: false,
   champion: 'TBD',
