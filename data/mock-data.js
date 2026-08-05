@@ -393,6 +393,8 @@ export const rules = [
 export const winners = {
   concluded: false,
   champion: 'TBD',
+  secondPlacer: 'TBD',
+  thirdPlacer: 'TBD',
   runnerUp: 'TBD',
   mvp: 'TBD',
 };

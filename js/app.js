@@ -163,6 +163,8 @@ const toArray = (value) => (Array.isArray(value) ? value : []);
 const toObject = (value) =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 
+const toBool = (value) => String(value).trim().toLowerCase() === 'true';
+
 const formatDisplayName = (value) =>
   escapeHtml(value || 'Tagalog Open').replace(/\s+/g, '<br>');
 
@@ -330,12 +332,29 @@ async function renderHome() {
     ]);
 
     const settings = toObject(settingsRaw);
-    const announcements = toArray(announcementsRaw);
+    const announcements = toArray(announcementsRaw).map((announcement) => ({
+      ...announcement,
+      pinned: toBool(announcement?.pinned),
+      urgent: toBool(announcement?.urgent),
+    }));
     const matches = toArray(matchesRaw);
-    const winners = toObject(winnersRaw);
+    const winners = {
+      ...toObject(winnersRaw),
+      concluded: toBool(winnersRaw?.concluded),
+    };
     const featuredAnnouncement = announcements.find((announcement) => announcement?.pinned) || announcements[0];
-    const liveMatch = matches.find((match) => match?.status === 'Live');
-    const featuredMatch = liveMatch || matches.find((match) => match?.status === 'Upcoming');
+    const liveMatches = matches
+      .filter((match) => match?.status === 'Live')
+      .sort((a, b) => getPhilippineTimestamp(a?.date, a?.time, '00:00:00') - getPhilippineTimestamp(b?.date, b?.time, '00:00:00'));
+    const upcomingMatches = matches
+      .filter((match) => match?.status === 'Upcoming')
+      .sort(
+        (a, b) =>
+          getPhilippineTimestamp(a?.date, a?.time, '23:59:59') -
+          getPhilippineTimestamp(b?.date, b?.time, '23:59:59')
+      );
+    const featuredMatches = liveMatches.length ? liveMatches : upcomingMatches.slice(0, 1);
+    const featuredMatchTitle = liveMatches.length > 1 ? 'Featured matches' : 'Featured match';
     const prizeTiers = [
       {
         place: 'Champion',
@@ -542,11 +561,10 @@ async function renderHome() {
         <div class="section-heading">
           <div>
             <div class="eyebrow" style="color: var(--green-2)">Center court</div>
-            <h2 class="section-title">Featured match</h2>
+            <h2 class="section-title">${featuredMatchTitle}</h2>
           </div>
-          ${badge(featuredMatch?.status || 'Upcoming')}
         </div>
-        ${featureMatch(featuredMatch)}
+        ${featureMatchList(featuredMatches)}
       </div>
     </section>
 
@@ -554,27 +572,27 @@ async function renderHome() {
       <div class="container">
         <div class="section-heading">
           <div>
-            <div class="eyebrow">The road ahead</div>
-            <h2 class="section-title">Tournament honors</h2>
+            <div class="eyebrow">${winners.concluded ? 'Final results' : 'The road ahead'}</div>
+            <h2 class="section-title">${winners.concluded ? 'Tournament honors' : 'Tournament honors pending'}</h2>
           </div>
-          <p class="muted">Revealed after championship night</p>
+          <p class="muted">${winners.concluded ? 'Official honors are now finalized.' : 'Revealed after championship night'}</p>
         </div>
 
-        <div class="outcomes">
-          <div class="card outcome-card ${winners.concluded ? '' : 'tbd'}">
+        <div class="outcomes ${winners.concluded ? 'is-final' : 'is-pending'}">
+          <div class="card outcome-card ${winners.concluded ? 'is-final' : 'is-pending'}">
             <div class="outcome-icon">1</div>
             <div class="eyebrow">Champion</div>
-            <h3>${winners.champion}</h3>
+            <h3>${winners.champion || 'TBD'}</h3>
           </div>
-          <div class="card outcome-card ${winners.concluded ? '' : 'tbd'}">
+          <div class="card outcome-card ${winners.concluded ? 'is-final' : 'is-pending'}">
             <div class="outcome-icon">2</div>
-            <div class="eyebrow">Runner-up</div>
-            <h3>${winners.runnerUp}</h3>
+            <div class="eyebrow">2nd Placer</div>
+            <h3>${winners.secondPlacer || winners.runnerUp || 'TBD'}</h3>
           </div>
-          <div class="card outcome-card ${winners.concluded ? '' : 'tbd'}">
-            <div class="outcome-icon">*</div>
-            <div class="eyebrow">Tournament MVP</div>
-            <h3>${winners.mvp}</h3>
+          <div class="card outcome-card ${winners.concluded ? 'is-final' : 'is-pending'}">
+            <div class="outcome-icon">3</div>
+            <div class="eyebrow">3rd Placer</div>
+            <h3>${winners.thirdPlacer || winners.mvp || 'TBD'}</h3>
           </div>
         </div>
       </div>
@@ -672,6 +690,62 @@ function featureMatch(match) {
         </div>
       </div>
     </article>
+  `;
+}
+
+function featureMatchList(matches) {
+  const list = toArray(matches).filter(Boolean);
+
+  if (!list.length) {
+    return '<article class="card"><p class="muted">No featured match available yet.</p></article>';
+  }
+
+  const [spotlight, ...rest] = list;
+
+  return `
+    <div class="featured-match-stack">
+      <article class="card featured-match-spotlight">
+        <div class="card-kicker">${badge(spotlight.status || 'Upcoming')}</div>
+        <div class="match-feature">
+          <div>
+            <div class="competitor">${spotlight.player1}</div>
+            <div class="muted">${spotlight.round}</div>
+          </div>
+          <div class="versus">VS</div>
+          <div>
+            <div class="competitor">${spotlight.player2}</div>
+            <div class="muted">${spotlight.court} - ${spotlight.time}</div>
+          </div>
+        </div>
+      </article>
+
+      ${
+        rest.length
+          ? `
+            <div class="featured-match-queue">
+              <div class="queue-label">${rest.length > 1 ? 'More live matches' : 'Another live match'}</div>
+              ${rest
+                .map(
+                  (match) => `
+                    <article class="mini-match">
+                      <div class="mini-match-head">
+                        <strong>${match.player1}</strong>
+                        <span>${match.time}</span>
+                      </div>
+                      <div class="mini-match-vs">vs ${match.player2}</div>
+                      <div class="mini-match-meta">
+                        <span>${match.round}</span>
+                        <span>${match.court}</span>
+                      </div>
+                    </article>
+                  `
+                )
+                .join('')}
+            </div>
+          `
+          : ''
+      }
+    </div>
   `;
 }
 
@@ -1156,17 +1230,25 @@ async function renderRules() {
 // ---------------------------------------------------------------------------
 
 async function renderAnnouncements() {
-  const list = (await getAnnouncements()).sort(
-    (a, b) => Number(b.pinned) - Number(a.pinned) || b.iso.localeCompare(a.iso)
-  );
+  const list = toArray(await getAnnouncements())
+    .map((announcement) => ({
+      ...announcement,
+      pinned: toBool(announcement?.pinned),
+      urgent: toBool(announcement?.urgent),
+      iso: String(announcement?.iso || '').trim(),
+    }))
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.iso.localeCompare(a.iso));
 
   document.querySelector('#announcement-list').innerHTML = list.length
     ? list
         .map(
           (announcement) => `
-            <article class="announcement-card ${announcement.pinned ? 'pinned' : ''}">
+            <article class="announcement-card ${announcement.pinned ? 'pinned' : ''} ${announcement.urgent ? 'urgent' : ''}">
               <div class="announcement-meta">
-                ${announcement.pinned ? '<span class="pin-label">* Pinned</span>' : ''}
+                <span class="announcement-flags">
+                  ${announcement.pinned ? '<span class="pin-label">Pinned</span>' : ''}
+                  ${announcement.urgent ? '<span class="urgent-label">Urgent</span>' : ''}
+                </span>
                 <span>${announcement.date}</span>
                 <span>&bull;</span>
                 <span>${announcement.category}</span>
