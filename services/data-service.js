@@ -8,8 +8,8 @@ import {
   winners,
 } from '../data/mock-data.js';
 
-// Bridge between website and GSheet as my database.
-// Below is my GSheet API web app URL from Apps Script - update if needed - dvb
+// This file bridges the website and your Google Sheet database.
+// Update this URL only if you create a new Apps Script web app deployment.
 const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbz4aaKoERbIz63te3065WI0krhQp9xp0epG4gwL_O-zKEweBglCIflUzIur6wJ4uZwjbw/exec';
 
@@ -23,10 +23,10 @@ const localData = {
   winners,
 };
 
-// Helper to fetch resource from Apps Script web app.
+// Helper to fetch one resource from the Apps Script web app.
 async function fetchResource(resource) {
   try {
-    // Added cache-busting timestamp for fresh data from pukinginang sheet
+    // Cache-bust each request so the browser asks for fresh sheet data.
     const url = `${APPS_SCRIPT_URL}?resource=${resource}&_=${Date.now()}`;
     const response = await fetch(url, { cache: 'no-store' });
 
@@ -41,7 +41,7 @@ async function fetchResource(resource) {
   }
 }
 
-// Exported function below loads one fucking tab from your fucking gsheet.
+// Each exported function loads one tab from Google Sheets.
 export const getTournamentSettings = () => fetchResource('settings');
 export const getPlayers = () => fetchResource('players');
 export const getMatches = () => fetchResource('matches');

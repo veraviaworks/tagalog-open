@@ -166,6 +166,16 @@ const toObject = (value) =>
 const formatDisplayName = (value) =>
   escapeHtml(value || 'Tagalog Open').replace(/\s+/g, '<br>');
 
+const formatMoney = (value) => {
+  const raw = String(value ?? '').trim();
+
+  if (!raw) {
+    return '';
+  }
+
+  return raw.startsWith('$') ? raw : `$${raw}`;
+};
+
 function formatSheetTime(value) {
   const raw = String(value || '').trim();
 
@@ -326,6 +336,54 @@ async function renderHome() {
     const featuredAnnouncement = announcements.find((announcement) => announcement?.pinned) || announcements[0];
     const liveMatch = matches.find((match) => match?.status === 'Live');
     const featuredMatch = liveMatch || matches.find((match) => match?.status === 'Upcoming');
+    const prizeTiers = [
+      {
+        place: 'Champion',
+        amount: settings.prizeChampion || settings.prize,
+        note: settings.prizeChampionNote || 'Top prize',
+      },
+      {
+        place: '2nd Placer',
+        amount: settings.prizeSecond,
+        note: settings.prizeSecondNote || 'Runner-up prize',
+      },
+      {
+        place: '3rd Placer',
+        amount: settings.prizeThird,
+        note: settings.prizeThirdNote || 'Third place prize',
+      },
+    ].filter((tier) => tier.amount);
+
+    const prizeSection = prizeTiers.length
+      ? `
+        <section class="section section-soft prize-section">
+          <div class="container">
+            <div class="section-heading">
+              <div>
+                <div class="eyebrow" style="color: var(--green-2)">Prize list</div>
+                <h2 class="section-title">Tournament prizes</h2>
+              </div>
+              <p class="muted"></p>
+            </div>
+
+            <div class="cards-3 prize-grid">
+              ${prizeTiers
+                .map(
+                  (tier) => `
+                    <article class="card outcome-card prize-card">
+                      <div class="outcome-icon prize-icon">${tier.place === 'Champion' ? '1' : tier.place === '2nd Placer' ? '2' : '3'}</div>
+                      <div class="eyebrow">${tier.place}</div>
+                      <h3>${formatMoney(tier.amount)}</h3>
+                      <p class="muted">${tier.note}</p>
+                    </article>
+                  `
+                )
+                .join('')}
+            </div>
+          </div>
+        </section>
+      `
+      : '';
 
     document.querySelector('[data-home]').innerHTML = `
     <section class="hero">
@@ -338,8 +396,16 @@ async function renderHome() {
             of precision, pressure, and championship tennis.
             </p>
           <div class="hero-actions">
+            <a
+              class="button button-primary"
+              href="https://bit.ly/45vG1QQ"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Register now <span></span>
+            </a>
             <a class="button button-primary" href="schedule.html">
-              View schedule <span>-></span>
+              View schedule <span></span>
             </a>
             <a class="button button-secondary" href="players.html">Meet the players</a>
           </div>
@@ -373,6 +439,8 @@ async function renderHome() {
       </div>
     </section>
 
+    ${prizeSection}
+
     <section class="section">
       <div class="container">
         <div class="stats-grid">
@@ -387,10 +455,6 @@ async function renderHome() {
           <div class="stat">
             <strong>${settings.totalMatches}</strong>
             <span>Matches</span>
-          </div>
-          <div class="stat">
-            <strong>${settings.prize}</strong>
-            <span>Prize purse</span>
           </div>
         </div>
       </div>
@@ -531,7 +595,7 @@ async function renderHome() {
               <div class="card-kicker">Progression</div>
               <h3>Championship bracket</h3>
             </div>
-            <span class="arrow">-></span>
+            <span class="arrow"></span>
           </a>
 
           <a class="card quick-card" href="results.html">
@@ -539,7 +603,7 @@ async function renderHome() {
               <div class="card-kicker">Courtside</div>
               <h3>Live scores & results</h3>
             </div>
-            <span class="arrow">-></span>
+            <span class="arrow"></span>
           </a>
 
           <a class="card quick-card" href="rules.html">
@@ -547,11 +611,12 @@ async function renderHome() {
               <div class="card-kicker">Official</div>
               <h3>Tournament rules</h3>
             </div>
-            <span class="arrow">-></span>
+            <span class="arrow"></span>
           </a>
         </div>
       </div>
     </section>
+
   `;
 
     startCountdown(settings);
@@ -582,6 +647,8 @@ async function renderHome() {
           </aside>
         </div>
       </section>
+
+      ${prizeSection}
     `;
   }
 }
@@ -860,39 +927,87 @@ async function renderSchedule() {
 // ---------------------------------------------------------------------------
 
 async function renderBracket() {
-  const rounds = await getBracket();
+  const rows = await getBracket();
+  const list = Array.isArray(rows) ? rows : [];
+  const roundOrder = ['Round of 16', 'Quarterfinals', 'Semifinals', 'Championship', 'Champion'];
+  const roundAliases = {
+    roundof16: 'Round of 16',
+    quarterfinals: 'Quarterfinals',
+    semifinals: 'Semifinals',
+    championship: 'Championship',
+    champion: 'Champion',
+  };
 
-  document.querySelector('#bracket').innerHTML = rounds
-    .map(
-      (round, index) => `
-        <section class="bracket-round ${index === rounds.length - 1 ? 'champion-round' : ''}">
-          <h3>${round.name}</h3>
-          <div class="round-matches">
-            ${round.matches
-              .map(
-                (match, matchIndex) => `
-                  <article class="bracket-match" aria-label="${round.name} match ${matchIndex + 1}">
-                    ${match
-                      .slice(0, 2)
-                      .filter(Boolean)
-                      .map(
-                        (name) => `
-                          <div class="bracket-player ${match[2] === name ? 'winner' : ''} ${name === 'TBD' ? 'tbd' : ''}">
-                            <span>${name}</span>
-                            ${match[2] === name ? '<span>✓</span>' : ''}
-                          </div>
-                        `
-                      )
-                      .join('')}
-                  </article>
-                `
-              )
-              .join('')}
-          </div>
-        </section>
-      `
-    )
-    .join('');
+  const groupedRounds = list.reduce((acc, row) => {
+    const rawRound = String(row.roundname ?? row.roundName ?? row.round ?? '').trim();
+    const aliasKey = rawRound.toLowerCase().replace(/\s+/g, '');
+    const roundName = roundAliases[aliasKey] || rawRound || 'Bracket';
+    const currentMatches = acc[roundName] || [];
+    const matchNumber = Number(row.matchNumber ?? row.matchnumber ?? currentMatches.length + 1);
+
+    if (!acc[roundName]) {
+      acc[roundName] = [];
+    }
+
+    acc[roundName].push({
+      matchNumber: Number.isFinite(matchNumber) ? matchNumber : currentMatches.length + 1,
+      player1: String(row.player1 ?? 'TBD').trim() || 'TBD',
+      player2: String(row.player2 ?? 'TBD').trim() || 'TBD',
+      winner: String(row.winner ?? '').trim(),
+    });
+
+    return acc;
+  }, {});
+
+  const sortedRounds = Object.entries(groupedRounds)
+    .sort(([roundA], [roundB]) => {
+      const indexA = roundOrder.indexOf(roundA);
+      const indexB = roundOrder.indexOf(roundB);
+
+      if (indexA === -1 && indexB === -1) return roundA.localeCompare(roundB);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    })
+    .map(([name, matches]) => ({
+      name,
+      matches: matches.sort((a, b) => a.matchNumber - b.matchNumber),
+    }));
+
+  document.querySelector('#bracket').innerHTML = sortedRounds.length
+    ? sortedRounds
+        .map(
+          (round, index) => `
+            <section class="bracket-round ${index === sortedRounds.length - 1 ? 'champion-round' : ''}">
+              <h3>${round.name}</h3>
+              <div class="round-matches">
+                ${round.matches
+                  .map(
+                    (match) => `
+                      <article class="bracket-match" aria-label="${round.name} match ${match.matchNumber}">
+                        <div class="bracket-player ${match.winner === match.player1 ? 'winner' : ''} ${match.player1 === 'TBD' ? 'tbd' : ''}">
+                          <span>${match.player1}</span>
+                          ${match.winner === match.player1 ? '<span>&#10003;</span>' : ''}
+                        </div>
+                        <div class="bracket-player ${match.winner === match.player2 ? 'winner' : ''} ${match.player2 === 'TBD' ? 'tbd' : ''}">
+                          <span>${match.player2}</span>
+                          ${match.winner === match.player2 ? '<span>&#10003;</span>' : ''}
+                        </div>
+                      </article>
+                    `
+                  )
+                  .join('')}
+              </div>
+            </section>
+          `
+        )
+        .join('')
+    : `
+      <div class="empty-state">
+        <strong>No bracket rows found</strong>
+        Add rows to the Bracket tab using roundname, matchNumber, player1, player2, and winner.
+      </div>
+    `;
 }
 
 // ---------------------------------------------------------------------------

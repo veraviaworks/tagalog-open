@@ -8,13 +8,22 @@ export const tournamentSettings = {
   startDate: '2026-08-22T18:00:00-07:00',
   endDate: '2026-08-24T23:00:00-07:00',
   displayDate: 'August 22-24, 2026',
+  startTime: '6:00 PM',
+  displayTime: '6:00 PM',
+  endDisplayTime: '11:00 PM',
+  timezoneLabel: 'Philippine Time (PHT)',
   location: 'Los Santos',
   registrationStatus: 'Registration Open',
   capacity: 16,
   format: '16-player single elimination',
   registeredCount: 12,
   totalMatches: 15,
-  prize: '$250,000',
+  prizeChampion: '$250,000',
+  prizeSecond: '$150,000',
+  prizeThird: '$80,000',
+  prizeChampionNote: 'Cash prize + house & lot',
+  prizeSecondNote: 'Cash prize',
+  prizeThirdNote: 'Cash prize',
   lastUpdated: 'August 2, 2026',
 };
 
@@ -272,45 +281,24 @@ export const matches = [
 ];
 
 // DVB Bracket layout for the bracket page.
-// Each match is stored as: [player one, player two, winner] - test data only
+// This mirrors the Google Sheet format: one row per match.
 export const bracket = [
-  {
-    name: 'Round of 16',
-    matches: [
-      ['Mateo Santos', 'Noah Garcia', 'Mateo Santos'],
-      ['Isabella Torres', 'Camila Aquino', 'Isabella Torres'],
-      ['Mika Reyes', 'Luna Castillo', 'Mika Reyes'],
-      ['Lucas Villanueva', 'Sofia Mendoza', null],
-      ['Elena Cruz', 'Adrian Ramos', null],
-      ['Gabriel Flores', 'TBD', null],
-      ['Rafael Navarro', 'TBD', null],
-      ['TBD', 'TBD', null],
-    ],
-  },
-  {
-    name: 'Quarterfinals',
-    matches: [
-      ['Mateo Santos', 'Isabella Torres', null],
-      ['Mika Reyes', 'TBD', null],
-      ['TBD', 'TBD', null],
-      ['TBD', 'TBD', null],
-    ],
-  },
-  {
-    name: 'Semifinals',
-    matches: [
-      ['TBD', 'TBD', null],
-      ['TBD', 'TBD', null],
-    ],
-  },
-  {
-    name: 'Championship',
-    matches: [['TBD', 'TBD', null]],
-  },
-  {
-    name: 'Champion',
-    matches: [['TBD', '', null]],
-  },
+  { roundname: 'Round of 16', matchNumber: 1, player1: 'Mateo Santos', player2: 'Noah Garcia', winner: 'Mateo Santos' },
+  { roundname: 'Round of 16', matchNumber: 2, player1: 'Isabella Torres', player2: 'Camila Aquino', winner: 'Isabella Torres' },
+  { roundname: 'Round of 16', matchNumber: 3, player1: 'Mika Reyes', player2: 'Luna Castillo', winner: 'Mika Reyes' },
+  { roundname: 'Round of 16', matchNumber: 4, player1: 'Lucas Villanueva', player2: 'Sofia Mendoza', winner: '' },
+  { roundname: 'Round of 16', matchNumber: 5, player1: 'Elena Cruz', player2: 'Adrian Ramos', winner: '' },
+  { roundname: 'Round of 16', matchNumber: 6, player1: 'Gabriel Flores', player2: 'TBD', winner: '' },
+  { roundname: 'Round of 16', matchNumber: 7, player1: 'Rafael Navarro', player2: 'TBD', winner: '' },
+  { roundname: 'Round of 16', matchNumber: 8, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Quarterfinals', matchNumber: 1, player1: 'Mateo Santos', player2: 'Isabella Torres', winner: '' },
+  { roundname: 'Quarterfinals', matchNumber: 2, player1: 'Mika Reyes', player2: 'TBD', winner: '' },
+  { roundname: 'Quarterfinals', matchNumber: 3, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Quarterfinals', matchNumber: 4, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Semifinals', matchNumber: 1, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Semifinals', matchNumber: 2, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Championship', matchNumber: 1, player1: 'TBD', player2: 'TBD', winner: '' },
+  { roundname: 'Champion', matchNumber: 1, player1: 'TBD', player2: '', winner: '' },
 ];
 
 // DVB News and update cards for the announcements page - test data only
