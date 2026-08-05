@@ -40,7 +40,7 @@ function renderShell(settings = {}) {
   const footer = document.querySelector('[data-site-footer]');
   const siteName = settings.name || 'Tagalog Open';
   const presentedBy = settings.presentedBy || 'Office of the Mayor, City of Los Santos';
-  const location = settings.location || 'Vespucci Tennis Club, Los Santos';
+  const location = settings.location || 'Vespucci Beach Tennis Court';
   const brandMark = siteName
     .split(/\s+/)
     .map((word) => word[0] || '')
@@ -282,6 +282,9 @@ const escapeHtml = (value) =>
       })[char]
   );
 
+const formatMultilineHtml = (value) =>
+  escapeHtml(value).replace(/\r?\n/g, '<br>');
+
 function openModal(content) {
   const modal = document.querySelector('#detail-modal');
 
@@ -317,6 +320,29 @@ function openModal(content) {
   };
 }
 
+function announcementModalMarkup(announcement) {
+  return `
+    ${
+      announcement.photo
+        ? `
+          <img class="announcement-modal-photo" src="${escapeHtml(announcement.photo)}" alt="${escapeHtml(
+            announcement.title
+          )}">
+        `
+        : ''
+    }
+    <div class="announcement-modal-meta">
+      ${badge(announcement.pinned ? 'Pinned' : 'Announcement')}
+      ${announcement.urgent ? badge('Urgent') : ''}
+      <span>${announcement.date}</span>
+      <span>&bull;</span>
+      <span>${announcement.category}</span>
+    </div>
+    <h2 class="modal-title">${announcement.title}</h2>
+    <p>${announcement.content}</p>
+  `;
+}
+
 // ---------------------------------------------------------------------------
 // DVB Home page
 // ---------------------------------------------------------------------------
@@ -335,6 +361,7 @@ async function renderHome() {
       ...announcement,
       pinned: toBool(announcement?.pinned),
       urgent: toBool(announcement?.urgent),
+      photo: String(announcement?.photo || '').trim(),
     }));
     const matches = toArray(matchesRaw);
     const winners = {
@@ -410,7 +437,7 @@ async function renderHome() {
             <div class="eyebrow">Presented by ${escapeHtml(settings.presentedBy || 'Office of the Mayor')}</div>
             <h1 class="display">${formatDisplayName(settings.name)}</h1>
             <p class="lead">
-            ${settings.tagline || 'One city. One court. One champion.'} Los Santos steps onto center court for three nights
+            ${settings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
             of precision, pressure, and championship tennis.
             </p>
           <div class="hero-actions">
@@ -450,7 +477,7 @@ async function renderHome() {
             </div>
             <div>
               <span class="hero-card-label">Venue</span>
-              <strong>${settings.location || 'Vespucci Tennis Club, Los Santos'}</strong>
+              <strong>${settings.location || 'Vespucci Beach Tennis Court'}</strong>
             </div>
           </div>
         </aside>
@@ -482,12 +509,12 @@ async function renderHome() {
       <div class="container">
         <div class="section-heading">
           <div>
-            <div class="eyebrow" style="color: var(--green-2)">City championship tennis</div>
+            <div class="eyebrow" style="color: var(--green-2)">CITY OF LOS SANTOS • TAGALOG OPEN</div>
             <h2 class="section-title">The court belongs<br>to Los Santos</h2>
           </div>
           <p class="lead" style="color: #5e6b64">
-            Sixteen competitors. One single-elimination bracket. Every rally moves
-            one player closer to the city championship.
+            The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination
+            tournament for the opportunity to become the Tagalog Open Champion.
           </p>
         </div>
 
@@ -496,8 +523,8 @@ async function renderHome() {
             <div class="card-kicker">Registration</div>
             <h3>${settings.registrationStatus}</h3>
             <p class="muted">
-              Four places remain. Registration closes August 9 or when the field
-              reaches capacity.
+              Registration remains open until the announced deadline or until registration is officially closed by the
+              tournament organizers.
             </p>
           </article>
 
@@ -505,16 +532,15 @@ async function renderHome() {
             <div class="card-kicker">Format</div>
             <h3>${settings.format}</h3>
             <p class="muted">
-              Best-of-three sets from the opening round through the championship final.
+              Opening rounds are <strong>Race to 3</strong>. Quarterfinals, Semifinals, and Finals are
+              <strong>Race to 6</strong>.
             </p>
           </article>
 
           <article class="card" id="venue">
             <div class="card-kicker">Venue</div>
-            <h3>${settings.location || 'Vespucci Tennis Club, Los Santos'}</h3>
-            <p class="muted">
-              Center Court and Court 2 host play across all three tournament nights.
-            </p>
+            <h3>Vespucci Beach Tennis Court</h3>
+            <p class="muted">Competitors should refer to the match schedule for their assigned court and start time.</p>
           </article>
         </div>
       </div>
@@ -536,12 +562,29 @@ async function renderHome() {
               ${
                 featuredAnnouncement
                   ? `
-                    <div class="card-kicker">
-                      ${featuredAnnouncement.category} - ${featuredAnnouncement.date}
+                    <div class="announcement-feature-layout">
+                      <div class="announcement-feature-copy">
+                        <div class="card-kicker">
+                          ${featuredAnnouncement.category} - ${featuredAnnouncement.date}
+                        </div>
+                        <h3>${featuredAnnouncement.title}</h3>
+                        <p class="multiline-copy">${formatMultilineHtml(featuredAnnouncement.content)}</p>
+                        <a class="button button-primary" href="announcements.html">Read updates</a>
+                      </div>
+                      ${
+                        featuredAnnouncement.photo
+                          ? `
+                            <button class="announcement-feature-thumb" type="button" data-announcement-feature>
+                              <img
+                                src="${escapeHtml(featuredAnnouncement.photo)}"
+                                alt="${escapeHtml(featuredAnnouncement.title)}"
+                              >
+                              <span>View photo</span>
+                            </button>
+                          `
+                          : ''
+                      }
                     </div>
-                    <h3>${featuredAnnouncement.title}</h3>
-                    <p>${featuredAnnouncement.content}</p>
-                    <a class="button button-primary" href="announcements.html">Read updates</a>
                   `
                   : `
                     <div class="card-kicker">Announcements</div>
@@ -636,12 +679,21 @@ async function renderHome() {
 
   `;
 
+    if (featuredAnnouncement?.photo) {
+      document.querySelector('[data-announcement-feature]')?.addEventListener('click', () => {
+        openModal(announcementModalMarkup(featuredAnnouncement));
+      });
+    }
+
     startCountdown(settings);
   } catch (error) {
     console.error('Home page render failed', error);
 
     const fallbackSettings = toObject(
-      await getTournamentSettings().catch(() => ({ tagline: 'One city. One court. One champion.' }))
+      await getTournamentSettings().catch(() => ({
+        tagline:
+          "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion.",
+      }))
     );
 
     document.querySelector('[data-home]').innerHTML = `
@@ -651,7 +703,7 @@ async function renderHome() {
             <div class="eyebrow">Presented by ${escapeHtml(fallbackSettings.presentedBy || 'Office of the Mayor')}</div>
             <h1 class="display">${formatDisplayName(fallbackSettings.name)}</h1>
             <p class="lead">
-              ${fallbackSettings.tagline || 'One city. One court. One champion.'} Los Santos steps onto center court for three nights
+              ${fallbackSettings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
               of precision, pressure, and championship tennis.
             </p>
           </div>
@@ -1232,7 +1284,7 @@ async function renderRules() {
             </button>
           </h2>
           <div class="accordion-content" id="rule-${index}" ${index === 0 ? '' : 'hidden'}>
-            <p>${rule.content}</p>
+            <p class="multiline-copy">${formatMultilineHtml(rule.content)}</p>
           </div>
         </article>
       `
@@ -1262,6 +1314,7 @@ async function renderAnnouncements() {
       pinned: toBool(announcement?.pinned),
       urgent: toBool(announcement?.urgent),
       iso: String(announcement?.iso || '').trim(),
+      photo: String(announcement?.photo || '').trim(),
     }))
     .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.iso.localeCompare(a.iso));
 
@@ -1270,17 +1323,37 @@ async function renderAnnouncements() {
         .map(
           (announcement) => `
             <article class="announcement-card ${announcement.pinned ? 'pinned' : ''} ${announcement.urgent ? 'urgent' : ''}">
-              <div class="announcement-meta">
-                <span class="announcement-flags">
-                  ${announcement.pinned ? '<span class="pin-label">Pinned</span>' : ''}
-                  ${announcement.urgent ? '<span class="urgent-label">Urgent</span>' : ''}
-                </span>
-                <span>${announcement.date}</span>
-                <span>&bull;</span>
-                <span>${announcement.category}</span>
+              <div class="announcement-card-main">
+                <div class="announcement-meta">
+                  <span class="announcement-flags">
+                    ${announcement.pinned ? '<span class="pin-label">Pinned</span>' : ''}
+                    ${announcement.urgent ? '<span class="urgent-label">Urgent</span>' : ''}
+                  </span>
+                  <span>${announcement.date}</span>
+                  <span>&bull;</span>
+                  <span>${announcement.category}</span>
+                </div>
+                <h2>${announcement.title}</h2>
+                <p class="multiline-copy">${formatMultilineHtml(announcement.content)}</p>
+                ${
+                  announcement.photo
+                    ? `<button class="text-button announcement-open" type="button" data-announcement="${escapeHtml(
+                        announcement.id || announcement.title
+                      )}">View photo</button>`
+                    : ''
+                }
               </div>
-              <h2>${announcement.title}</h2>
-              <p>${announcement.content}</p>
+              ${
+                announcement.photo
+                  ? `
+                    <button class="announcement-photo" type="button" data-announcement="${escapeHtml(
+                      announcement.id || announcement.title
+                    )}">
+                      <img src="${escapeHtml(announcement.photo)}" alt="${escapeHtml(announcement.title)}">
+                    </button>
+                  `
+                  : ''
+              }
             </article>
           `
         )
@@ -1291,6 +1364,15 @@ async function renderAnnouncements() {
           Official tournament updates will appear here.
         </div>
       `;
+
+  document.querySelectorAll('[data-announcement]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const announcement = list.find((item) => (item.id || item.title) === button.dataset.announcement);
+      if (announcement) {
+        openModal(announcementModalMarkup(announcement));
+      }
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
