@@ -121,7 +121,6 @@ function renderShell(settings = {}) {
             <div class="footer-links">
               <a href="rules.html">Official rules</a>
               <a href="announcements.html">Announcements</a>
-              <a href="index.html#venue">Venue</a>
             </div>
           </div>
         </div>
@@ -375,7 +374,7 @@ async function renderHome() {
 
     const prizeSection = prizeTiers.length
       ? `
-        <section class="section section-soft prize-section">
+        <section class="section section-soft prize-section reveal-section">
           <div class="container">
             <div class="section-heading">
               <div>
@@ -479,7 +478,7 @@ async function renderHome() {
       </div>
     </section>
 
-    <section class="section section-soft">
+    <section class="section section-soft featured-matches-section reveal-section">
       <div class="container">
         <div class="section-heading">
           <div>
@@ -556,7 +555,7 @@ async function renderHome() {
         </div>
     </section>
 
-    <section class="section section-soft">
+    <section class="section section-soft reveal-section">
       <div class="container">
         <div class="section-heading">
           <div>
@@ -568,7 +567,7 @@ async function renderHome() {
       </div>
     </section>
 
-    <section class="section">
+    <section class="section section-soft honors-section reveal-section">
       <div class="container">
         <div class="section-heading">
           <div>
@@ -598,7 +597,7 @@ async function renderHome() {
       </div>
     </section>
 
-    <section class="section">
+    <section class="section explore-section reveal-section">
       <div class="container">
         <div class="section-heading">
           <div>
@@ -846,6 +845,33 @@ function startCountdown(settings) {
 
   tick();
   setInterval(tick, 1000);
+}
+
+function initScrollReveal() {
+  const sections = document.querySelectorAll('[data-home] .reveal-section');
+
+  if (!sections.length) {
+    return;
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    sections.forEach((section) => section.classList.add('is-visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        entry.target.classList.toggle('is-visible', entry.isIntersecting);
+      });
+    },
+    {
+      threshold: 0.18,
+      rootMargin: '0px 0px -6% 0px',
+    }
+  );
+
+  sections.forEach((section) => observer.observe(section));
 }
 
 // ---------------------------------------------------------------------------
@@ -1281,6 +1307,8 @@ async function initializeSite() {
   const renderer = renderers[page];
 
   await renderer?.();
+
+  initScrollReveal();
 }
 
 const renderers = {
