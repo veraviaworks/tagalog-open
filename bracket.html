@@ -1,1 +1,68 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Follow player progression through the Tagalog Open championship bracket."><title>Bracket | Tagalog Open</title><link rel="stylesheet" href="css/styles.css"><script type="module" src="js/app.js"></script></head><body data-page="bracket"><div data-site-header></div><main id="main"><section class="page-hero"><div class="container"><div class="eyebrow">Single elimination</div><h1 class="display">Tournament<br>Bracket</h1><p class="lead">Sixteen enter. Every match narrows the field until one player stands as champion.</p></div></section><section class="section section-soft"><div class="container"><div class="section-heading"><div><div class="eyebrow" style="color:var(--green-2)">Road to the title</div><h2 class="section-title">Championship draw</h2></div><p class="muted">Scroll horizontally to view every round</p></div><div class="bracket-shell" tabindex="0" aria-label="Scrollable tournament bracket"><div class="bracket" id="bracket"></div></div></div></section></main><div data-site-footer></div></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic page setup -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Follow player progression through the Tagalog Open championship bracket."
+    >
+
+    <title>Bracket | Tagalog Open</title>
+
+    <!-- db shared site styling -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- db shared site logic -->
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body data-page="bracket">
+
+    <!-- db shared header here -->
+    <div data-site-header></div>
+
+    <!-- db main page content starts here -->
+    <main id="main">
+
+      <!-- db hero / intro section -->
+      <section class="page-hero">
+        <div class="container">
+          <div class="eyebrow">Single elimination</div>
+          <h1 class="display">Tournament<br>Bracket</h1>
+          <p class="lead">
+            Sixteen enter. Every match narrows the field until one player
+            stands as champion.
+          </p>
+        </div>
+      </section>
+
+      <!-- db bracket display here -->
+      <section class="section section-soft">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow" style="color: var(--green-2)">
+                Road to the title
+              </div>
+              <h2 class="section-title">Championship draw</h2>
+            </div>
+            <p class="muted">Scroll horizontally to view every round</p>
+          </div>
+
+          <!-- db javaScript display full bracket here -->
+          <div
+            class="bracket-shell"
+            tabindex="0"
+            aria-label="Scrollable tournament bracket"
+          >
+            <div class="bracket" id="bracket"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- db shared footer here -->
+    <div data-site-footer></div>
+  </body>
+</html>
