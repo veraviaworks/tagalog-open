@@ -8,8 +8,7 @@ import {
   getWinnerInformation,
 } from '../services/data-service.js';
 
-// This tells the app which HTML page is currently open.
-// Each HTML file sets a value such as "home", "players", or "schedule".
+// code to tell system which fucking page is open
 const page = document.body.dataset.page || 'home';
 
 // Shared navigation links used in the header.
@@ -23,13 +22,37 @@ const links = [
   ['announcements', 'announcements.html', 'Announcements'],
 ];
 
-// ---------------------------------------------------------------------------
-// Shared layout helpers
-// ---------------------------------------------------------------------------
+const pageTitles = {
+  home: '',
+  players: 'Players',
+  schedule: 'Schedule',
+  bracket: 'Bracket',
+  results: 'Scores & Results',
+  rules: 'Rules',
+  announcements: 'Announcements',
+};
+const PH_TIMEZONE = 'Asia/Manila';
 
-function renderShell() {
+// dvb shared layout helper
+
+function renderShell(settings = {}) {
   const header = document.querySelector('[data-site-header]');
   const footer = document.querySelector('[data-site-footer]');
+  const siteName = settings.name || 'Tagalog Open';
+  const presentedBy = settings.presentedBy || 'Office of the Mayor, City of Los Santos';
+  const location = settings.location || 'Vespucci Tennis Club, Los Santos';
+  const brandMark = siteName
+    .split(/\s+/)
+    .map((word) => word[0] || '')
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  const currentYear = settings.startDate
+    ? new Date(settings.startDate).getFullYear()
+    : new Date().getFullYear();
+
+  const pageTitle = pageTitles[page];
+  document.title = pageTitle ? `${pageTitle} | ${siteName}` : `${siteName} | City of Los Santos`;
 
   // The header and footer are not repeated manually in every HTML page.
   // Instead, this function injects the shared site layout into placeholder divs.
@@ -37,9 +60,9 @@ function renderShell() {
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container nav-wrap">
-        <a class="brand" href="index.html" aria-label="Tagalog Open home">
-          <span class="brand-mark">TO</span>
-          <span>Tagalog Open</span>
+        <a class="brand" href="index.html" aria-label="${escapeHtml(siteName)} home">
+          <span class="brand-mark">${escapeHtml(brandMark)}</span>
+          <span>${escapeHtml(siteName)}</span>
         </a>
 
         <nav class="nav-links" id="site-nav" aria-label="Primary navigation">
@@ -75,12 +98,11 @@ function renderShell() {
         <div class="footer-grid">
           <div>
             <a class="brand" href="index.html">
-              <span class="brand-mark">TO</span>
-              <span>Tagalog Open</span>
+              <span class="brand-mark">${escapeHtml(brandMark)}</span>
+              <span>${escapeHtml(siteName)}</span>
             </a>
             <p class="footer-copy">
-              A premier Los Santos tennis tournament celebrating competition,
-              community, and the city's finest sporting talent.
+              ${escapeHtml(settings.tagline || `A premier tennis tournament celebrating competition, community, and the city's finest sporting talent.`)}
             </p>
           </div>
 
@@ -105,8 +127,8 @@ function renderShell() {
         </div>
 
         <div class="footer-bottom">
-          <span>Presented by the Office of the Mayor, City of Los Santos</span>
-          <span>&copy; 2026 Tagalog Open</span>
+          <span>Presented by ${escapeHtml(presentedBy)}</span>
+          <span>&copy; ${currentYear} ${escapeHtml(siteName)} · ${escapeHtml(location)}</span>
         </div>
       </div>
     </footer>
@@ -115,7 +137,7 @@ function renderShell() {
   const toggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('.nav-links');
 
-  // Mobile menu open / close behavior.
+  // for fookinginang mobile view open close behavior
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
 
@@ -131,10 +153,109 @@ function renderShell() {
   });
 }
 
-// Creates a consistent status badge such as Live, Upcoming, or Completed.
+//  For status badge - Live, Upcoming, or Completed.
 const badge = (status) => `
   <span class="badge badge-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span>
 `;
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const toObject = (value) =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+
+const formatDisplayName = (value) =>
+  escapeHtml(value || 'Tagalog Open').replace(/\s+/g, '<br>');
+
+function formatSheetTime(value) {
+  const raw = String(value || '').trim();
+
+  if (!raw) {
+    return '';
+  }
+
+  // Added for ISO date time PH zone 
+  if (raw.includes('T')) {
+    const parsed = new Date(raw);
+
+    if (!Number.isNaN(parsed.getTime())) {
+      return new Intl.DateTimeFormat('en-PH', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: PH_TIMEZONE,
+      }).format(parsed);
+    }
+  }
+
+  return raw;
+}
+
+function getPhilippineDateParts(value) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: PH_TIMEZONE,
+  });
+
+  const parts = formatter.formatToParts(parsed);
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function normalizePhilippineDate(value) {
+  const raw = String(value || '').trim();
+
+  if (!raw) {
+    return '';
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const parts = getPhilippineDateParts(raw);
+
+  if (parts) {
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
+  return raw;
+}
+
+function formatSheetDate(value) {
+  const normalized = normalizePhilippineDate(value);
+
+  if (!normalized) {
+    return '';
+  }
+
+  const parsed = new Date(`${normalized}T00:00:00+08:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return normalized;
+  }
+
+  return new Intl.DateTimeFormat('en-PH', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: PH_TIMEZONE,
+  }).format(parsed);
+}
 
 // Small helper to safely print text into HTML when needed.
 const escapeHtml = (value) =>
@@ -186,30 +307,36 @@ function openModal(content) {
 }
 
 // ---------------------------------------------------------------------------
-// Home page
+// DVB Home page
 // ---------------------------------------------------------------------------
 
 async function renderHome() {
-  const [settings, announcements, matches, winners] = await Promise.all([
-    getTournamentSettings(),
-    getAnnouncements(),
-    getMatches(),
-    getWinnerInformation(),
-  ]);
+  try {
+    const [settingsRaw, announcementsRaw, matchesRaw, winnersRaw] = await Promise.all([
+      getTournamentSettings(),
+      getAnnouncements(),
+      getMatches(),
+      getWinnerInformation(),
+    ]);
 
-  const liveMatch = matches.find((match) => match.status === 'Live');
-  const featuredMatch = liveMatch || matches.find((match) => match.status === 'Upcoming');
+    const settings = toObject(settingsRaw);
+    const announcements = toArray(announcementsRaw);
+    const matches = toArray(matchesRaw);
+    const winners = toObject(winnersRaw);
+    const featuredAnnouncement = announcements.find((announcement) => announcement?.pinned) || announcements[0];
+    const liveMatch = matches.find((match) => match?.status === 'Live');
+    const featuredMatch = liveMatch || matches.find((match) => match?.status === 'Upcoming');
 
-  document.querySelector('[data-home]').innerHTML = `
+    document.querySelector('[data-home]').innerHTML = `
     <section class="hero">
       <div class="container hero-grid">
-        <div class="hero-copy">
-          <div class="eyebrow">Presented by the Office of the Mayor</div>
-          <h1 class="display">Tagalog<br>Open</h1>
-          <p class="lead">
-            ${settings.tagline} Los Santos steps onto center court for three nights
+          <div class="hero-copy">
+            <div class="eyebrow">Presented by ${escapeHtml(settings.presentedBy || 'Office of the Mayor')}</div>
+            <h1 class="display">${formatDisplayName(settings.name)}</h1>
+            <p class="lead">
+            ${settings.tagline || 'One city. One court. One champion.'} Los Santos steps onto center court for three nights
             of precision, pressure, and championship tennis.
-          </p>
+            </p>
           <div class="hero-actions">
             <a class="button button-primary" href="schedule.html">
               View schedule <span>-></span>
@@ -224,11 +351,22 @@ async function renderHome() {
           <div class="hero-meta">
             <div>
               <span class="hero-card-label">Dates</span>
-              <strong>${settings.displayDate}</strong>
+              <strong>${settings.displayDate || formatSheetDate(settings.startDate) || 'Dates to be announced'}</strong>
+              ${
+                formatSheetTime(settings.displayTime || settings.startTime) || settings.timezoneLabel
+                  ? `
+                    <div class="muted">
+                      ${formatSheetTime(settings.displayTime || settings.startTime) || ''}
+                      ${formatSheetTime(settings.displayTime || settings.startTime) && settings.timezoneLabel ? ' · ' : ''}
+                      ${settings.timezoneLabel || ''}
+                    </div>
+                  `
+                  : ''
+              }
             </div>
             <div>
               <span class="hero-card-label">Venue</span>
-              <strong>Vespucci Tennis Club</strong>
+              <strong>${settings.location || 'Vespucci Tennis Club, Los Santos'}</strong>
             </div>
           </div>
         </aside>
@@ -291,7 +429,7 @@ async function renderHome() {
 
           <article class="card" id="venue">
             <div class="card-kicker">Venue</div>
-            <h3>${settings.location}</h3>
+            <h3>${settings.location || 'Vespucci Tennis Club, Los Santos'}</h3>
             <p class="muted">
               Center Court and Court 2 host play across all three tournament nights.
             </p>
@@ -310,18 +448,29 @@ async function renderHome() {
           <a class="button button-secondary" href="announcements.html">All announcements</a>
         </div>
 
-        <article class="announcement-feature">
-          <div class="feature-label">Official<br>Notice</div>
-          <div class="feature-body">
-            <div class="card-kicker">
-              ${announcements[0].category} - ${announcements[0].date}
+          <article class="announcement-feature">
+            <div class="feature-label">Official<br>Notice</div>
+            <div class="feature-body">
+              ${
+                featuredAnnouncement
+                  ? `
+                    <div class="card-kicker">
+                      ${featuredAnnouncement.category} - ${featuredAnnouncement.date}
+                    </div>
+                    <h3>${featuredAnnouncement.title}</h3>
+                    <p>${featuredAnnouncement.content}</p>
+                    <a class="button button-primary" href="announcements.html">Read updates</a>
+                  `
+                  : `
+                    <div class="card-kicker">Announcements</div>
+                    <h3>No announcements yet</h3>
+                    <p>Updates will appear here once you add rows to the announcements tab.</p>
+                    <a class="button button-primary" href="announcements.html">View announcements</a>
+                  `
+              }
             </div>
-            <h3>${announcements[0].title}</h3>
-            <p>${announcements[0].content}</p>
-            <a class="button button-primary" href="announcements.html">Read updates</a>
-          </div>
-        </article>
-      </div>
+          </article>
+        </div>
     </section>
 
     <section class="section section-soft">
@@ -405,7 +554,36 @@ async function renderHome() {
     </section>
   `;
 
-  startCountdown(settings);
+    startCountdown(settings);
+  } catch (error) {
+    console.error('Home page render failed', error);
+
+    const fallbackSettings = toObject(
+      await getTournamentSettings().catch(() => ({ tagline: 'One city. One court. One champion.' }))
+    );
+
+    document.querySelector('[data-home]').innerHTML = `
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow">Presented by ${escapeHtml(fallbackSettings.presentedBy || 'Office of the Mayor')}</div>
+            <h1 class="display">${formatDisplayName(fallbackSettings.name)}</h1>
+            <p class="lead">
+              ${fallbackSettings.tagline || 'One city. One court. One champion.'} Los Santos steps onto center court for three nights
+              of precision, pressure, and championship tennis.
+            </p>
+          </div>
+
+          <aside class="hero-card">
+            <div class="hero-card-label">Home page fallback</div>
+            <p class="muted">
+              The live sheet data loaded with a mismatch, so the homepage is showing a safe fallback view.
+            </p>
+          </aside>
+        </div>
+      </section>
+    `;
+  }
 }
 
 function featureMatch(match) {
@@ -430,13 +608,70 @@ function featureMatch(match) {
   `;
 }
 
+function parseTimeTo24Hour(timeValue, fallback = '00:00:00') {
+  const value = String(timeValue || '').trim();
+
+  if (!value) {
+    return fallback;
+  }
+
+  const normalized = value.toUpperCase().replace(/\s+/g, ' ');
+  const match = normalized.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
+
+  if (!match) {
+    return fallback;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = match[2] || '00';
+  const period = match[3];
+
+  if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${minutes}:00`;
+}
+
+function getPhilippineTimestamp(dateValue, timeValue, fallbackTime) {
+  const value = normalizePhilippineDate(dateValue);
+
+  if (!value) {
+    return NaN;
+  }
+
+  const time = parseTimeTo24Hour(timeValue, fallbackTime);
+  return new Date(`${value}T${time}+08:00`).getTime();
+}
+
 function startCountdown(settings) {
   const element = document.querySelector('[data-countdown]');
+  if (!element || !settings?.startDate) {
+    return;
+  }
 
   const tick = () => {
     const now = Date.now();
-    const start = new Date(settings.startDate).getTime();
-    const end = new Date(settings.endDate).getTime();
+    const start = getPhilippineTimestamp(
+      settings.startDate,
+      settings.startTime || formatSheetTime(settings.displayTime),
+      '00:00:00'
+    );
+    const end = settings.endDate
+      ? getPhilippineTimestamp(
+          settings.endDate,
+          settings.endTime || formatSheetTime(settings.endDisplayTime),
+          '23:59:59'
+        )
+      : Number.POSITIVE_INFINITY;
+
+    if (Number.isNaN(start)) {
+      return;
+    }
 
     if (now >= end) {
       element.innerHTML = '<div class="count-message" style="grid-column: 1 / -1">Tournament Completed</div>';
@@ -473,7 +708,7 @@ function startCountdown(settings) {
 }
 
 // ---------------------------------------------------------------------------
-// Players page
+// DVB Players page
 // ---------------------------------------------------------------------------
 
 async function renderPlayers() {
@@ -484,7 +719,7 @@ async function renderPlayers() {
   const draw = () => {
     const term = search.value.toLowerCase();
     const list = players.filter((player) =>
-      `${player.name} ${player.affiliation}`.toLowerCase().includes(term)
+      `${player.id} ${player.name} ${player.initials} ${player.status}`.toLowerCase().includes(term)
     );
 
     document.querySelector('#player-count').textContent = `${list.length} player${list.length === 1 ? '' : 's'}`;
@@ -496,12 +731,11 @@ async function renderPlayers() {
               <article class="card player-card">
                 <div class="player-top">
                   <div class="avatar">${player.initials}</div>
-                  <div class="seed">${player.seed ? `Seed ${player.seed}` : 'Unseeded'}</div>
+                  <div class="seed">${player.id}</div>
                 </div>
                 <h3>${player.name}</h3>
-                <div class="muted">${player.affiliation}</div>
                 <div class="card-footer">
-                  ${badge(player.registration)}
+                  ${badge(player.status)}
                   <button class="text-button" data-player="${player.id}">View profile -></button>
                 </div>
               </article>
@@ -522,28 +756,17 @@ async function renderPlayers() {
         openModal(`
           <div class="avatar">${player.initials}</div>
           <h2 class="modal-title">${player.name}</h2>
-          <div class="muted">${player.affiliation}</div>
-
+          <p class="muted">Player details at a glance</p>
           <div class="detail-grid">
             <div class="detail">
-              <small>Seed</small>
-              <strong>${player.seed || 'Unseeded'}</strong>
+              <small>ID</small>
+              <strong>${player.id}</strong>
             </div>
             <div class="detail">
               <small>Status</small>
               <strong>${player.status}</strong>
             </div>
-            <div class="detail">
-              <small>Hometown</small>
-              <strong>${player.hometown}</strong>
-            </div>
-            <div class="detail">
-              <small>Plays</small>
-              <strong>${player.handedness}</strong>
-            </div>
           </div>
-
-          <p>${player.bio}</p>
         `);
       };
     });
@@ -554,7 +777,7 @@ async function renderPlayers() {
 }
 
 // ---------------------------------------------------------------------------
-// Schedule page
+// DVB Schedule page
 // ---------------------------------------------------------------------------
 
 async function renderSchedule() {
@@ -633,7 +856,7 @@ async function renderSchedule() {
 }
 
 // ---------------------------------------------------------------------------
-// Bracket page
+// DVB Bracket page
 // ---------------------------------------------------------------------------
 
 async function renderBracket() {
@@ -673,7 +896,7 @@ async function renderBracket() {
 }
 
 // ---------------------------------------------------------------------------
-// Results page
+// DVB Results page
 // ---------------------------------------------------------------------------
 
 async function renderResults() {
@@ -770,7 +993,7 @@ async function renderResults() {
 }
 
 // ---------------------------------------------------------------------------
-// Rules page
+// DVB Rules page
 // ---------------------------------------------------------------------------
 
 async function renderRules() {
@@ -814,7 +1037,7 @@ async function renderRules() {
 }
 
 // ---------------------------------------------------------------------------
-// Announcements page
+// DVB Announcements page
 // ---------------------------------------------------------------------------
 
 async function renderAnnouncements() {
@@ -848,13 +1071,21 @@ async function renderAnnouncements() {
 }
 
 // ---------------------------------------------------------------------------
-// App start
+// DVB App start
 // ---------------------------------------------------------------------------
 
-// First the shared layout is drawn.
-renderShell();
+async function initializeSite() {
+  const shellSettings = toObject(await getTournamentSettings().catch(() => ({})));
 
-// Then the app chooses the correct page renderer.
+  // First the shared layout is drawn.
+  renderShell(shellSettings);
+
+  // Then the app chooses the correct page renderer.
+  const renderer = renderers[page];
+
+  await renderer?.();
+}
+
 const renderers = {
   home: renderHome,
   players: renderPlayers,
@@ -865,7 +1096,7 @@ const renderers = {
   announcements: renderAnnouncements,
 };
 
-renderers[page]?.().catch((error) => {
+initializeSite().catch((error) => {
   console.error(error);
 
   const main = document.querySelector('main');

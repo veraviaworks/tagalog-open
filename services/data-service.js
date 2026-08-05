@@ -1,20 +1,47 @@
-// This file is the bridge between the website and your Google Sheet data.
-// This is your Google Sheet API web app URL from Google Apps Script.
+import {
+  tournamentSettings,
+  players,
+  matches,
+  bracket,
+  announcements,
+  rules,
+  winners,
+} from '../data/mock-data.js';
+
+// Bridge between website and GSheet as my database.
+// Below is my GSheet API web app URL from Apps Script - update if needed - dvb
 const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbz4aaKoERbIz63te3065WI0krhQp9xp0epG4gwL_O-zKEweBglCIflUzIur6wJ4uZwjbw/exec';
 
-// This helper fetches one resource from your Google Apps Script web app.
+const localData = {
+  settings: tournamentSettings,
+  players,
+  matches,
+  bracket,
+  announcements,
+  rules,
+  winners,
+};
+
+// Helper to fetch resource from Apps Script web app.
 async function fetchResource(resource) {
-  const response = await fetch(`${APPS_SCRIPT_URL}?resource=${resource}`);
+  try {
+    // Added cache-busting timestamp for fresh data from pukinginang sheet
+    const url = `${APPS_SCRIPT_URL}?resource=${resource}&_=${Date.now()}`;
+    const response = await fetch(url, { cache: 'no-store' });
 
-  if (!response.ok) {
-    throw new Error(`Failed to load ${resource}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${resource}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.warn(`Using local fallback for ${resource}`, error);
+    return JSON.parse(JSON.stringify(localData[resource]));
   }
-
-  return response.json();
 }
 
-// Each exported function below loads one tab from your Google Sheet.
+// Exported function below loads one fucking tab from your fucking gsheet.
 export const getTournamentSettings = () => fetchResource('settings');
 export const getPlayers = () => fetchResource('players');
 export const getMatches = () => fetchResource('matches');

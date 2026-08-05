@@ -1,11 +1,6 @@
-// This file stores the sample tournament content used by the website.
-//
-// Think of this as the site's temporary database.
-// The UI does not read this file directly.
-// Instead, app.js asks the service layer for data, and the service layer
-// returns these values to the page.
+// DVB MOCK DATA ONLY FOR MY UIX
 
-// General tournament information used across multiple pages.
+// General tournament info for homepage
 export const tournamentSettings = {
   name: 'Tagalog Open',
   presentedBy: 'Office of the Mayor, City of Los Santos',
@@ -13,13 +8,13 @@ export const tournamentSettings = {
   startDate: '2026-08-22T18:00:00-07:00',
   endDate: '2026-08-24T23:00:00-07:00',
   displayDate: 'August 22-24, 2026',
-  location: 'Vespucci Tennis Club, Los Santos',
+  location: 'Los Santos',
   registrationStatus: 'Registration Open',
   capacity: 16,
   format: '16-player single elimination',
   registeredCount: 12,
   totalMatches: 15,
-  prize: '$150,000',
+  prize: '$250,000',
   lastUpdated: 'August 2, 2026',
 };
 
@@ -27,151 +22,42 @@ export const tournamentSettings = {
 export const players = [
   {
     id: 'p1',
-    name: 'Mateo Santos',
-    initials: 'MS',
-    affiliation: 'Los Santos Police Department',
-    seed: 1,
+    name: 'Ruby Berry',
+    initials: 'RB',
     registration: 'Confirmed',
     status: 'Active',
-    hometown: 'La Mesa',
-    handedness: 'Right-handed',
-    bio: 'A composed baseline player known for patient rallies and clinical returns.',
   },
   {
     id: 'p2',
-    name: 'Elena Cruz',
-    initials: 'EC',
-    affiliation: 'Pillbox Medical Center',
-    seed: 2,
+    name: 'Theodore Kurnatowski',
+    initials: 'TK',
     registration: 'Confirmed',
     status: 'Active',
-    hometown: 'Del Perro',
-    handedness: 'Left-handed',
-    bio: 'An aggressive counterpuncher with one of the quickest serves in the field.',
   },
   {
     id: 'p3',
-    name: 'Rafael Navarro',
-    initials: 'RN',
-    affiliation: 'Los Santos Customs',
-    seed: 3,
+    name: 'Victoria Ellsworth',
+    initials: 'VE',
     registration: 'Confirmed',
     status: 'Active',
-    hometown: 'Hawick',
-    handedness: 'Right-handed',
-    bio: 'A fearless net player who thrives in short, high-pressure exchanges.',
   },
   {
     id: 'p4',
-    name: 'Mika Reyes',
-    initials: 'MR',
-    affiliation: 'Weazel News',
-    seed: 4,
+    name: 'Alejandro Tagalog',
+    initials: 'AT',
     registration: 'Confirmed',
     status: 'Active',
-    hometown: 'Downtown',
-    handedness: 'Right-handed',
-    bio: 'A tactical all-court competitor with a sharp cross-court forehand.',
   },
   {
     id: 'p5',
-    name: 'Lucas Villanueva',
-    initials: 'LV',
-    affiliation: 'Department of Justice',
-    seed: 5,
+    name: 'Yozo Yamashita',
+    initials: 'YY',
     registration: 'Confirmed',
     status: 'Active',
-    hometown: 'Rockford Hills',
-    handedness: 'Left-handed',
-    bio: 'A steady competitor respected for discipline and excellent court coverage.',
-  },
-  {
-    id: 'p6',
-    name: 'Sofia Mendoza',
-    initials: 'SM',
-    affiliation: 'Los Santos Fire Department',
-    seed: 6,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'Vespucci',
-    handedness: 'Right-handed',
-    bio: 'A powerful server who looks to control points from the opening shot.',
-  },
-  {
-    id: 'p7',
-    name: 'Gabriel Flores',
-    initials: 'GF',
-    affiliation: 'Dynasty 8',
-    seed: 7,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'Mirror Park',
-    handedness: 'Right-handed',
-    bio: 'A creative shot-maker who uses pace changes to disrupt opponents.',
-  },
-  {
-    id: 'p8',
-    name: 'Isabella Torres',
-    initials: 'IT',
-    affiliation: 'Bahama Mamas',
-    seed: 8,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'West Vinewood',
-    handedness: 'Left-handed',
-    bio: 'A resilient defender with an exceptional backhand down the line.',
-  },
-  {
-    id: 'p9',
-    name: 'Noah Garcia',
-    initials: 'NG',
-    affiliation: 'Los Santos Transit',
-    seed: null,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'Strawberry',
-    handedness: 'Right-handed',
-    bio: 'A newcomer bringing speed, energy, and an unpredictable return game.',
-  },
-  {
-    id: 'p10',
-    name: 'Camila Aquino',
-    initials: 'CA',
-    affiliation: 'Bean Machine',
-    seed: null,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'Little Seoul',
-    handedness: 'Right-handed',
-    bio: 'A confident doubles specialist making her singles tournament debut.',
-  },
-  {
-    id: 'p11',
-    name: 'Adrian Ramos',
-    initials: 'AR',
-    affiliation: 'Premium Deluxe Motorsport',
-    seed: null,
-    registration: 'Pending',
-    status: 'Reserve',
-    hometown: 'Burton',
-    handedness: 'Left-handed',
-    bio: 'A hard hitter awaiting final tournament registration clearance.',
-  },
-  {
-    id: 'p12',
-    name: 'Luna Castillo',
-    initials: 'LC',
-    affiliation: 'Vanilla Unicorn',
-    seed: null,
-    registration: 'Confirmed',
-    status: 'Active',
-    hometown: 'Davis',
-    handedness: 'Right-handed',
-    bio: 'A calm and resourceful competitor who excels in deciding points.',
   },
 ];
 
-// Match list for the schedule page and live/completed results page.
+// Match list for the schedule page and live/completed results page - test data only get details from AI to fill
 export const matches = [
   {
     id: 'm1',
@@ -385,9 +271,8 @@ export const matches = [
   },
 ];
 
-// Bracket layout for the bracket page.
-// Each match is stored as:
-// [player one, player two, winner]
+// DVB Bracket layout for the bracket page.
+// Each match is stored as: [player one, player two, winner] - test data only
 export const bracket = [
   {
     name: 'Round of 16',
@@ -428,7 +313,7 @@ export const bracket = [
   },
 ];
 
-// News and update cards for the announcements page.
+// DVB News and update cards for the announcements page - test data only
 export const announcements = [
   {
     id: 'a1',
@@ -472,7 +357,7 @@ export const announcements = [
   },
 ];
 
-// Rule entries for the accordion on the rules page.
+// DVB Rule entries for the accordion on the rules page - test data only
 export const rules = [
   {
     title: 'Tournament format',
@@ -516,7 +401,7 @@ export const rules = [
   },
 ];
 
-// Placeholder winners used on the home page until the event is finished.
+// DVB Placeholder winners used on the home page until the event is finishe
 export const winners = {
   concluded: false,
   champion: 'TBD',
