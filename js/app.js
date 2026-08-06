@@ -1081,13 +1081,20 @@ async function renderSchedule() {
 async function renderBracket() {
   const rows = await getBracket();
   const list = Array.isArray(rows) ? rows : [];
-  const roundOrder = ['Round of 16', 'Quarterfinals', 'Semifinals', 'Championship', 'Champion'];
+  const roundOrder = ['Laglagan', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final', 'Champion'];
   const roundAliases = {
+    round1: 'Laglagan',
+    'round 1': 'Laglagan',
     roundof16: 'Round of 16',
-    quarterfinals: 'Quarterfinals',
-    semifinals: 'Semifinals',
-    championship: 'Championship',
+    'round of 16': 'Round of 16',
+    quarterfinals: 'Quarter Finals',
+    'quarter finals': 'Quarter Finals',
+    semifinals: 'Semi Finals',
+    'semi finals': 'Semi Finals',
+    final: 'Final',
+    finals: 'Final',
     champion: 'Champion',
+    laglagan: 'Laglagan',
   };
 
   const groupedRounds = list.reduce((acc, row) => {
@@ -1106,60 +1113,151 @@ async function renderBracket() {
       player1: String(row.player1 ?? 'TBD').trim() || 'TBD',
       player2: String(row.player2 ?? 'TBD').trim() || 'TBD',
       winner: String(row.winner ?? '').trim(),
+      laglagan: String(row.laglagan ?? row.lagLagan ?? row.eliminated ?? '').trim(),
     });
 
     return acc;
   }, {});
 
-  const sortedRounds = Object.entries(groupedRounds)
-    .sort(([roundA], [roundB]) => {
-      const indexA = roundOrder.indexOf(roundA);
-      const indexB = roundOrder.indexOf(roundB);
+  const roundSizes = {
+    Laglagan: 16,
+    'Round of 16': 8,
+    'Quarter Finals': 4,
+    'Semi Finals': 2,
+    Final: 1,
+    Champion: 1,
+  };
 
-      if (indexA === -1 && indexB === -1) return roundA.localeCompare(roundB);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    })
-    .map(([name, matches]) => ({
+  const buildMatch = (matchNumber, match) => ({
+    matchNumber,
+    player1: String(match?.player1 ?? 'TBD').trim() || 'TBD',
+    player2: String(match?.player2 ?? 'TBD').trim() || 'TBD',
+    winner: String(match?.winner ?? '').trim(),
+    laglagan: String(match?.laglagan ?? match?.lagLagan ?? match?.eliminated ?? '').trim(),
+  });
+
+  const rounds = roundOrder.map((name) => {
+    const expectedCount = roundSizes[name] || 0;
+    const matches = (groupedRounds[name] || []).sort((a, b) => a.matchNumber - b.matchNumber);
+    const matchMap = new Map(matches.map((match) => [match.matchNumber, match]));
+
+    return {
       name,
-      matches: matches.sort((a, b) => a.matchNumber - b.matchNumber),
-    }));
+      matches: Array.from({ length: expectedCount }, (_, index) => buildMatch(index + 1, matchMap.get(index + 1))),
+    };
+  });
 
-  document.querySelector('#bracket').innerHTML = sortedRounds.length
-    ? sortedRounds
-        .map(
-          (round, index) => `
-            <section class="bracket-round ${index === sortedRounds.length - 1 ? 'champion-round' : ''}">
-              <h3>${round.name}</h3>
-              <div class="round-matches">
-                ${round.matches
-                  .map(
-                    (match) => `
-                      <article class="bracket-match" aria-label="${round.name} match ${match.matchNumber}">
-                        <div class="bracket-player ${match.winner === match.player1 ? 'winner' : ''} ${match.player1 === 'TBD' ? 'tbd' : ''}">
-                          <span>${match.player1}</span>
-                          ${match.winner === match.player1 ? '<span>&#10003;</span>' : ''}
-                        </div>
-                        <div class="bracket-player ${match.winner === match.player2 ? 'winner' : ''} ${match.player2 === 'TBD' ? 'tbd' : ''}">
-                          <span>${match.player2}</span>
-                          ${match.winner === match.player2 ? '<span>&#10003;</span>' : ''}
-                        </div>
-                      </article>
-                    `
-                  )
-                  .join('')}
-              </div>
-            </section>
-          `
-        )
-        .join('')
-    : `
-      <div class="empty-state">
-        <strong>No bracket rows found</strong>
-        Add rows to the Bracket tab using roundname, matchNumber, player1, player2, and winner.
-      </div>
-    `;
+  const advanceWinner = (match) => {
+    const winner = String(match?.winner ?? '').trim();
+    if (winner) {
+      return winner;
+    }
+
+    const player1 = String(match?.player1 ?? '').trim();
+    const player2 = String(match?.player2 ?? '').trim();
+    const isBye = (value) => /^(bye|automatic advance|auto advance)$/i.test(value);
+
+    if (player1 && isBye(player2)) {
+      return player1;
+    }
+
+    if (player2 && isBye(player1)) {
+      return player2;
+    }
+
+    return 'TBD';
+  };
+
+  const seededRounds = rounds.map((round, roundIndex, allRounds) => {
+    if (roundIndex === 0) {
+      return round;
+    }
+
+    const previousRound = allRounds[roundIndex - 1];
+
+    return {
+      ...round,
+      matches: round.matches.map((match) => {
+        const previousMatchA = previousRound?.matches?.[(match.matchNumber - 1) * 2];
+        const previousMatchB = previousRound?.matches?.[(match.matchNumber - 1) * 2 + 1];
+
+        if (round.name === 'Champion') {
+          return {
+            ...match,
+            player1: advanceWinner(previousMatchA) || match.player1 || 'TBD',
+            player2: '',
+          };
+        }
+
+        return {
+          ...match,
+          player1: advanceWinner(previousMatchA) || match.player1 || 'TBD',
+          player2: advanceWinner(previousMatchB) || match.player2 || 'TBD',
+        };
+      }),
+    };
+  });
+
+  document.querySelector('#bracket').innerHTML = rounds
+    .map((round, index) => ({
+      ...round,
+      matches: seededRounds[index]?.matches || round.matches,
+    }))
+    .map(
+      (round) => `
+        <section class="bracket-round ${round.name === 'Champion' ? 'champion-round' : ''}">
+          <h3>${round.name}</h3>
+          <div class="round-matches">
+            ${
+      round.matches.length
+        ? round.matches
+            .map(
+              (match) => `
+                        <article class="bracket-match ${round.name === 'Champion' ? 'champion-winner' : ''}" aria-label="${round.name} match ${match.matchNumber}">
+                          ${
+                            round.name === 'Champion'
+                              ? `
+                                <div class="bracket-champion">
+                                  <div class="champion-badge">🏆 Champion</div>
+                                  <div class="champion-name ${match.player1 === 'TBD' ? 'tbd' : ''}">
+                                    ${match.player1}
+                                  </div>
+                                </div>
+                              `
+                              : `
+                                <div class="bracket-player ${match.winner === match.player1 ? 'winner' : ''} ${match.player1 === 'TBD' ? 'tbd' : ''}">
+                                  <span>${match.player1}</span>
+                                  ${match.winner === match.player1 ? '<span>&#10003;</span>' : ''}
+                                </div>
+                                <div class="bracket-player ${match.winner === match.player2 ? 'winner' : ''} ${match.player2 === 'TBD' ? 'tbd' : ''}">
+                                  <span>${match.player2}</span>
+                                  ${match.winner === match.player2 ? '<span>&#10003;</span>' : ''}
+                                </div>
+                              `
+                          }
+                        </article>
+                      `
+                    )
+                    .join('')
+                : round.name === 'Champion'
+                  ? `
+                    <article class="bracket-match champion-placeholder champion-winner" aria-label="Champion placeholder">
+                      <div class="bracket-champion">
+                        <div class="champion-badge">🏆 Champion</div>
+                        <div class="champion-name tbd">TBD</div>
+                        <p>Winner appears here after the final.</p>
+                      </div>
+                    </article>
+                  `
+                  : `
+                    <div class="empty-bracket-slot">TBD</div>
+                  `
+            }
+          </div>
+        </section>
+      `
+    )
+    .join('');
 }
 
 // ---------------------------------------------------------------------------

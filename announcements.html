@@ -9,9 +9,7 @@
     </head>
     
     <body data-page="announcements">
-        <div data-site-header>
-
-        </div>
+        <div data-site-header></div>
         <main id="main">
             <section class="page-hero">
                 <div class="container">
@@ -21,5 +19,23 @@
                 </div>
             </section>
             <section class="section section-soft">
-                    <div class="container">
-                        <div class="section-heading"><div><div class="eyebrow" style="color:var(--green-2)">Newsroom</div><h2 class="section-title">Latest updates</h2></div><p class="muted">Pinned notices appear first</p></div><div class="announcement-list" id="announcement-list"></div></div></section></main><div data-site-footer></div></body></html>
+                <div class="container">
+                    <div class="section-heading">
+                        <div>
+                            <div class="eyebrow" style="color:var(--green-2)">Newsroom</div>
+                            <h2 class="section-title">Latest updates</h2>
+                        </div>
+                        <p class="muted">Pinned notices appear first</p>
+                    </div>
+                    <div class="announcement-list" id="announcement-list"></div>
+                </div>
+            </section>
+        </main>
+        <div data-site-footer></div>
+
+        <!-- Shared modal used for announcement photos and details -->
+        <div id="detail-modal" class="modal" hidden>
+            <div class="modal-panel"></div>
+        </div>
+    </body>
+</html>

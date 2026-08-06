@@ -283,9 +283,9 @@ export const matches = [
 // DVB Bracket layout for the bracket page.
 // This mirrors the Google Sheet format: one row per match.
 export const bracket = [
-  { roundname: 'Round of 16', matchNumber: 1, player1: 'Mateo Santos', player2: 'Noah Garcia', winner: 'Mateo Santos' },
-  { roundname: 'Round of 16', matchNumber: 2, player1: 'Isabella Torres', player2: 'Camila Aquino', winner: 'Isabella Torres' },
-  { roundname: 'Round of 16', matchNumber: 3, player1: 'Mika Reyes', player2: 'Luna Castillo', winner: 'Mika Reyes' },
+  { roundname: 'Round of 16', matchNumber: 1, player1: 'Mateo Santos', player2: 'Noah Garcia', winner: 'Mateo Santos', laglagan: 'Noah Garcia' },
+  { roundname: 'Round of 16', matchNumber: 2, player1: 'Isabella Torres', player2: 'Camila Aquino', winner: 'Isabella Torres', laglagan: 'Camila Aquino' },
+  { roundname: 'Round of 16', matchNumber: 3, player1: 'Mika Reyes', player2: 'Luna Castillo', winner: 'Mika Reyes', laglagan: 'Luna Castillo' },
   { roundname: 'Round of 16', matchNumber: 4, player1: 'Lucas Villanueva', player2: 'Sofia Mendoza', winner: '' },
   { roundname: 'Round of 16', matchNumber: 5, player1: 'Elena Cruz', player2: 'Adrian Ramos', winner: '' },
   { roundname: 'Round of 16', matchNumber: 6, player1: 'Gabriel Flores', player2: 'TBD', winner: '' },
