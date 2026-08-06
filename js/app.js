@@ -591,25 +591,6 @@ async function renderHome() {
 
     ${prizeSection}
 
-    <section class="section">
-      <div class="container">
-        <div class="stats-grid">
-          <div class="stat">
-            <strong>${settings.registeredCount}</strong>
-            <span>Players registered</span>
-          </div>
-          <div class="stat">
-            <strong>${settings.capacity}</strong>
-            <span>Player capacity</span>
-          </div>
-          <div class="stat">
-            <strong>${settings.totalMatches}</strong>
-            <span>Matches</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="section section-soft featured-matches-section reveal-section">
       <div class="container">
         <div class="section-heading">
