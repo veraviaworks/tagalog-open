@@ -338,6 +338,58 @@ const formatScoreStrip = (match) => {
   return `<span class="score-legacy">${score.text}</span>`;
 };
 
+const loadingPageLabels = {
+  home: 'the homepage',
+  players: 'the players page',
+  schedule: 'the schedule',
+  bracket: 'the bracket',
+  results: 'scores & results',
+  rules: 'the rules',
+  announcements: 'the announcements',
+};
+
+function showLoadingState(pageName = 'page') {
+  if (document.querySelector('#loading-overlay')) {
+    return;
+  }
+
+  const label = loadingPageLabels[pageName] || 'this page';
+  const overlay = document.createElement('div');
+  overlay.id = 'loading-overlay';
+  overlay.className = 'loading-overlay';
+  overlay.innerHTML = `
+    <div class="page-loading-panel" role="status" aria-live="polite" aria-label="Loading content">
+      <div class="page-loading">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div>
+          <div class="eyebrow">Loading</div>
+          <h1 class="loading-title">Fetching ${label}</h1>
+          <p class="loading-copy">
+            We're pulling the latest tournament data from Google Sheets.
+            This usually takes a moment.
+          </p>
+        </div>
+      </div>
+
+      <div class="loading-skeleton-grid">
+        ${Array.from({ length: pageName === 'home' ? 3 : pageName === 'bracket' ? 6 : 4 }, () => `
+          <div class="loading-skeleton-card">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function hideLoadingState() {
+  document.querySelector('#loading-overlay')?.remove();
+}
+
 function openModal(content) {
   const modal = document.querySelector('#detail-modal');
 
@@ -1552,11 +1604,22 @@ async function renderAnnouncements() {
 async function initializeSite() {
   // Draw the shared layout immediately so the page feels responsive.
   renderShell({});
+  showLoadingState(page);
 
   // Then the app chooses the correct page renderer.
   const renderer = renderers[page];
 
-  await renderer?.();
+  try {
+    await renderer?.();
+  } finally {
+    const main = document.querySelector('main');
+
+    if (main) {
+      main.setAttribute('aria-busy', 'false');
+    }
+
+    hideLoadingState();
+  }
 
   // Hydrate the shell after the page is already visible.
   getTournamentSettings()
@@ -1597,3 +1660,4 @@ initializeSite().catch((error) => {
     `
   );
 });
+
