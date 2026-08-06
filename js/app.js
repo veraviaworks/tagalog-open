@@ -1550,15 +1550,22 @@ async function renderAnnouncements() {
 // ---------------------------------------------------------------------------
 
 async function initializeSite() {
-  const shellSettings = toObject(await getTournamentSettings().catch(() => ({})));
-
-  // First the shared layout is drawn.
-  renderShell(shellSettings);
+  // Draw the shared layout immediately so the page feels responsive.
+  renderShell({});
 
   // Then the app chooses the correct page renderer.
   const renderer = renderers[page];
 
   await renderer?.();
+
+  // Hydrate the shell after the page is already visible.
+  getTournamentSettings()
+    .then((settingsRaw) => {
+      renderShell(toObject(settingsRaw));
+    })
+    .catch(() => {
+      // Keep the fallback shell if the sheet request fails.
+    });
 
   initScrollReveal();
 }
