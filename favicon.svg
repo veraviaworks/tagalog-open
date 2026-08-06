@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Tagalog Open">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b241a"/>
+      <stop offset="1" stop-color="#123d2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <circle cx="64" cy="64" r="46" fill="none" stroke="#c9f24a" stroke-width="4"/>
+  <path d="M44 44h12v40H44zM72 44h12v40H72z" fill="#c9f24a"/>
+  <path d="M40 44h48v12H40zM40 72h48v12H40z" fill="#c9f24a" transform="rotate(10 64 64)"/>
+</svg>
