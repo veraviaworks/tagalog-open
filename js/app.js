@@ -154,7 +154,9 @@ function renderShell(settings = {}) {
 
 //  For status badge - Live, Upcoming, or Completed.
 const badge = (status) => `
-  <span class="badge badge-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span>
+  ${String(status || '').trim()
+    ? `<span class="badge badge-${String(status).toLowerCase().replace(/\s+/g, '-')}">${status}</span>`
+    : ''}
 `;
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
@@ -284,6 +286,57 @@ const escapeHtml = (value) =>
 
 const formatMultilineHtml = (value) =>
   escapeHtml(value).replace(/\r?\n/g, '<br>');
+
+const formatMatchupHtml = (player1, player2) => {
+  const leftRaw = String(player1 ?? '').trim();
+  const rightRaw = String(player2 ?? '').trim();
+  const left = escapeHtml(leftRaw || 'TBD');
+  const right = escapeHtml(rightRaw || 'TBD');
+
+  if (!leftRaw && !rightRaw) {
+    return '<span class="tbd-state">TBD</span>';
+  }
+
+  return `${left}<br><span class="muted">vs ${right}</span>`;
+};
+
+const formatMatchScore = (match) => {
+  const p1 = String(match?.P1_Score ?? match?.p1_score ?? '').trim();
+  const p2 = String(match?.P2_Score ?? match?.p2_score ?? '').trim();
+  const legacyScore = String(match?.score ?? '').trim();
+
+  if (p1 || p2) {
+    return {
+      p1: escapeHtml(p1 || '-'),
+      p2: escapeHtml(p2 || '-'),
+      text: escapeHtml(`${p1 || '-'} - ${p2 || '-'}`),
+    };
+  }
+
+  return {
+    p1: '',
+    p2: '',
+    text: escapeHtml(legacyScore || '-'),
+  };
+};
+
+const formatWinner = (value) => String(value ?? '').trim() || 'TBD';
+
+const formatMatchDate = (value) => {
+  const raw = String(value ?? '').trim();
+
+  return raw ? escapeHtml(raw) : '<span class="tbd-state">TBD</span>';
+};
+
+const formatScoreStrip = (match) => {
+  const score = formatMatchScore(match);
+
+  if (score.p1 || score.p2) {
+    return `<span class="score-line-simple">${score.p1}-${score.p2}</span>`;
+  }
+
+  return `<span class="score-legacy">${score.text}</span>`;
+};
 
 function openModal(content) {
   const modal = document.querySelector('#detail-modal');
@@ -437,7 +490,7 @@ async function renderHome() {
             <div class="eyebrow">Presented by ${escapeHtml(settings.presentedBy || 'Office of the Mayor')}</div>
             <h1 class="display">${formatDisplayName(settings.name)}</h1>
             <p class="lead">
-            ${settings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
+            ${settings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a single-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
             of precision, pressure, and championship tennis.
             </p>
           <div class="hero-actions">
@@ -513,7 +566,7 @@ async function renderHome() {
             <h2 class="section-title">The court belongs<br>to Los Santos</h2>
           </div>
           <p class="lead" style="color: #5e6b64">
-            The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination
+            The Tagalog Open is the City's premier tennis championship. Competitors battle through a single-elimination
             tournament for the opportunity to become the Tagalog Open Champion.
           </p>
         </div>
@@ -691,8 +744,8 @@ async function renderHome() {
 
     const fallbackSettings = toObject(
       await getTournamentSettings().catch(() => ({
-        tagline:
-          "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion.",
+          tagline:
+          "The Tagalog Open is the City's premier tennis championship. Competitors battle through a single-elimination tournament for the opportunity to become the Tagalog Open Champion.",
       }))
     );
 
@@ -703,7 +756,7 @@ async function renderHome() {
             <div class="eyebrow">Presented by ${escapeHtml(fallbackSettings.presentedBy || 'Office of the Mayor')}</div>
             <h1 class="display">${formatDisplayName(fallbackSettings.name)}</h1>
             <p class="lead">
-              ${fallbackSettings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
+              ${fallbackSettings.tagline || "The Tagalog Open is the City's premier tennis championship. Competitors battle through a single-elimination tournament for the opportunity to become the Tagalog Open Champion."} Los Santos steps onto center court for three nights
               of precision, pressure, and championship tennis.
             </p>
           </div>
@@ -731,13 +784,13 @@ function featureMatch(match) {
     <article class="card">
       <div class="match-feature">
         <div>
-          <div class="competitor">${match.player1}</div>
+          <div class="competitor">${escapeHtml(String(match.player1 ?? '').trim() || 'TBD')}</div>
           <div class="muted">${match.round}</div>
         </div>
         <div class="versus">VS</div>
         <div>
-          <div class="competitor">${match.player2}</div>
-          <div class="muted">${match.court} - ${match.time}</div>
+          <div class="competitor">${escapeHtml(String(match.player2 ?? '').trim() || 'TBD')}</div>
+          <div class="muted">${escapeHtml(match.court)} - ${escapeHtml(match.time)}</div>
         </div>
       </div>
     </article>
@@ -756,16 +809,16 @@ function featureMatchList(matches) {
   return `
     <div class="featured-match-stack">
       <article class="card featured-match-spotlight">
-        <div class="card-kicker">${badge(spotlight.status || 'Upcoming')}</div>
+        <div class="card-kicker">${badge(spotlight.status)}</div>
         <div class="match-feature">
           <div>
-            <div class="competitor">${spotlight.player1}</div>
+            <div class="competitor">${escapeHtml(String(spotlight.player1 ?? '').trim() || 'TBD')}</div>
             <div class="muted">${spotlight.round}</div>
           </div>
           <div class="versus">VS</div>
           <div>
-            <div class="competitor">${spotlight.player2}</div>
-            <div class="muted">${spotlight.court} - ${spotlight.time}</div>
+            <div class="competitor">${escapeHtml(String(spotlight.player2 ?? '').trim() || 'TBD')}</div>
+            <div class="muted">${escapeHtml(spotlight.court)} - ${escapeHtml(spotlight.time)}</div>
           </div>
         </div>
       </article>
@@ -780,13 +833,13 @@ function featureMatchList(matches) {
                   (match) => `
                     <article class="mini-match">
                       <div class="mini-match-head">
-                        <strong>${match.player1}</strong>
-                        <span>${match.time}</span>
+                        <strong>${escapeHtml(String(match.player1 ?? '').trim() || 'TBD')}</strong>
+                        <span>${escapeHtml(match.time)}</span>
                       </div>
-                      <div class="mini-match-vs">vs ${match.player2}</div>
+                      <div class="mini-match-vs">vs ${escapeHtml(String(match.player2 ?? '').trim() || 'TBD')}</div>
                       <div class="mini-match-meta">
-                        <span>${match.round}</span>
-                        <span>${match.court}</span>
+                        <span>${escapeHtml(match.round)}</span>
+                        <span>${escapeHtml(match.court)}</span>
                       </div>
                     </article>
                   `
@@ -934,10 +987,16 @@ async function renderPlayers() {
   const players = await getPlayers();
   const grid = document.querySelector('#players-grid');
   const search = document.querySelector('#player-search');
+  const normalizePlayer = (player) => ({
+    id: String(player?.id ?? '').trim() || 'TBD',
+    name: String(player?.name ?? '').trim() || 'TBD',
+    initials: String(player?.initials ?? '').trim() || 'TBD',
+    status: String(player?.status ?? '').trim() || 'TBD',
+  });
 
   const draw = () => {
     const term = search.value.toLowerCase();
-    const list = players.filter((player) =>
+    const list = players.map(normalizePlayer).filter((player) =>
       `${player.id} ${player.name} ${player.initials} ${player.status}`.toLowerCase().includes(term)
     );
 
@@ -970,7 +1029,7 @@ async function renderPlayers() {
 
     grid.querySelectorAll('[data-player]').forEach((button) => {
       button.onclick = () => {
-        const player = players.find((entry) => entry.id === button.dataset.player);
+        const player = players.map(normalizePlayer).find((entry) => entry.id === button.dataset.player);
 
         openModal(`
           <div class="avatar">${player.initials}</div>
@@ -1033,10 +1092,14 @@ async function renderSchedule() {
       .map(
         (match) => `
           <tr>
-            <td>${match.displayDate}<br><span class="muted">${match.time}</span></td>
+            <td>${formatMatchDate(match.displayDate)}</td>
             <td>${match.court}</td>
             <td>${match.round}</td>
-            <td class="name-cell">${match.player1}<br><span class="muted">vs ${match.player2}</span></td>
+            <td class="name-cell">${formatMatchupHtml(match.player1, match.player2)}</td>
+            <td>
+              <div class="schedule-score">${formatScoreStrip(match)}</div>
+            </td>
+            <td><span class="winner-pill ${formatWinner(match.winner) === 'TBD' ? 'tbd' : ''}">${escapeHtml(formatWinner(match.winner))}</span></td>
             <td>${badge(match.status)}</td>
           </tr>
         `
@@ -1048,11 +1111,16 @@ async function renderSchedule() {
         (match) => `
           <article class="mobile-match">
             <div class="mobile-match-head">
-              <strong>${match.displayDate} - ${match.time}</strong>
+              <strong>${formatMatchDate(match.displayDate)}</strong>
               ${badge(match.status)}
             </div>
             <div class="mobile-match-players">
-              ${match.player1}<br><span class="muted">vs</span> ${match.player2}
+              ${formatMatchupHtml(match.player1, match.player2)}
+            </div>
+            <div class="mobile-match-score">${formatScoreStrip(match)}</div>
+            <div class="mobile-match-winner">
+              <span>Winner</span>
+              <strong class="${formatWinner(match.winner) === 'TBD' ? 'tbd' : ''}">${escapeHtml(formatWinner(match.winner))}</strong>
             </div>
             <div class="mobile-match-meta">
               <span>${match.round}</span>
@@ -1269,7 +1337,10 @@ async function renderResults() {
   const live = matches.filter((match) => match.status === 'Live');
   const completed = matches.filter((match) => match.status === 'Completed');
 
-  const card = (match) => `
+  const card = (match) => {
+    const score = formatMatchScore(match);
+
+    return `
     <article class="result-card">
       <div class="result-head">
         <span>${match.round} - ${match.court}</span>
@@ -1278,20 +1349,21 @@ async function renderResults() {
 
       <div class="score-line ${match.winner === match.player1 ? 'winner' : ''}">
         <span>${match.player1}</span>
-        <strong>${match.score.split(', ')[0] || '-'}</strong>
+        <strong>${score.p1 || score.text}</strong>
       </div>
 
       <div class="score-line ${match.winner === match.player2 ? 'winner' : ''}">
         <span>${match.player2}</span>
-        <strong>${match.status === 'Live' ? 'Current' : match.winner === match.player2 ? 'Winner' : 'Final'}</strong>
+        <strong>${score.p2 || (match.status === 'Live' ? 'Current' : match.winner === match.player2 ? 'Winner' : 'Final')}</strong>
       </div>
 
       <div class="result-foot">
-        <span>${match.displayDate} - ${match.time}</span>
+        <span>${formatMatchDate(match.displayDate)} - ${escapeHtml(String(match.time ?? '').trim() || 'TBD')}</span>
         <button class="text-button" data-match="${match.id}">Match details -></button>
       </div>
     </article>
   `;
+  };
 
   const render = (selector, list, label) => {
     const element = document.querySelector(selector);
@@ -1316,18 +1388,18 @@ async function renderResults() {
       openModal(`
         <div>${badge(match.status)}</div>
         <h2 class="modal-title">
-          ${match.player1}<br><span class="muted">vs</span> ${match.player2}
+          ${formatMatchupHtml(match.player1, match.player2)}
         </h2>
 
         <div class="detail-grid">
-          <div class="detail">
-            <small>Score</small>
-            <strong>${match.score}</strong>
-          </div>
-          <div class="detail">
-            <small>Winner</small>
-            <strong>${match.winner || 'In progress'}</strong>
-          </div>
+        <div class="detail">
+          <small>Score</small>
+          <strong>${formatMatchScore(match).text}</strong>
+        </div>
+        <div class="detail">
+          <small>Winner</small>
+          <strong>${formatWinner(match.winner)}</strong>
+        </div>
           <div class="detail">
             <small>Round</small>
             <strong>${match.round}</strong>

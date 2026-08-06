@@ -4,7 +4,7 @@
 export const tournamentSettings = {
   name: 'Tagalog Open',
   presentedBy: 'Office of the Mayor, City of Los Santos',
-  tagline: "The Tagalog Open is the City's premier tennis championship. Competitors battle through a double-elimination tournament for the opportunity to become the Tagalog Open Champion.",
+  tagline: "The Tagalog Open is the City's premier tennis championship. Competitors battle through a single-elimination tournament for the opportunity to become the Tagalog Open Champion.",
   startDate: '2026-08-22T18:00:00-07:00',
   endDate: '2026-08-24T23:00:00-07:00',
   displayDate: 'August 22-24, 2026',
