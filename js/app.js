@@ -363,11 +363,8 @@ function showLoadingState(pageName = 'page') {
         <div class="loading-spinner" aria-hidden="true"></div>
         <div>
           <div class="eyebrow">Loading</div>
-          <h1 class="loading-title">Fetching ${label}</h1>
-          <p class="loading-copy">
-            We're pulling the latest tournament data from Google Sheets.
-            This usually takes a moment.
-          </p>
+          <h1 class="loading-title">Loading tournament data...</h1>
+          <p class="loading-copy">This usually takes a moment.</p>
         </div>
       </div>
 
