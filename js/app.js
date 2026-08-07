@@ -1356,8 +1356,9 @@ async function renderSchedule() {
 // ---------------------------------------------------------------------------
 
 async function renderBracket() {
-  const rows = await getBracket();
-  const list = Array.isArray(rows) ? rows : [];
+  const [bracketRows, matchRows] = await Promise.all([getBracket(), getMatches()]);
+  const list = Array.isArray(bracketRows) ? bracketRows : [];
+  const matchesList = Array.isArray(matchRows) ? matchRows : [];
   const roundOrder = ['Laglagan', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final', 'Champion'];
   const roundAliases = {
     round1: 'Laglagan',
@@ -1374,23 +1375,81 @@ async function renderBracket() {
     laglagan: 'Laglagan',
   };
 
-  const groupedRounds = list.reduce((acc, row) => {
-    const rawRound = String(row.roundname ?? row.roundName ?? row.round ?? '').trim();
+  const normalizeRoundName = (value) => {
+    const rawRound = String(value ?? '').trim();
     const aliasKey = rawRound.toLowerCase().replace(/\s+/g, '');
-    const roundName = roundAliases[aliasKey] || rawRound || 'Bracket';
+    return roundAliases[aliasKey] || rawRound || 'Bracket';
+  };
+
+  const readRowValue = (row, keys, indexFallback = 0) => {
+    if (!row || typeof row !== 'object') {
+      return '';
+    }
+
+    const entries = Object.entries(row);
+
+    for (const key of keys) {
+      const match = entries.find(([entryKey]) => entryKey.toLowerCase() === key.toLowerCase());
+
+      if (match) {
+        return match[1];
+      }
+    }
+
+    return entries[indexFallback]?.[1] ?? '';
+  };
+
+  const cleanText = (value, fallback = 'TBD') => {
+    const raw = String(value ?? '').trim();
+
+    if (!raw || raw === '-' || raw.toLowerCase() === 'tbd') {
+      return fallback;
+    }
+
+    return raw;
+  };
+
+  const cleanWinner = (value) => {
+    const raw = String(value ?? '').trim();
+
+    if (!raw || raw === '-' || raw.toLowerCase() === 'tbd') {
+      return '';
+    }
+
+    return raw;
+  };
+
+  const matchWinnerLookup = new Map(
+    matchesList.map((row) => {
+      const roundName = normalizeRoundName(readRowValue(row, ['roundname', 'roundName', 'round'], 0));
+      const sourceMatchNumber = Number(readRowValue(row, ['matchNumber', 'matchnumber', 'match_number'], 1));
+
+      return [
+        `${roundName}|${Number.isFinite(sourceMatchNumber) ? sourceMatchNumber : ''}`,
+        cleanWinner(readRowValue(row, ['winner'], 4)),
+      ];
+    })
+  );
+
+  const groupedRounds = list.reduce((acc, row) => {
+    const rawRound = String(readRowValue(row, ['roundname', 'roundName', 'round'], 0)).trim();
+    const roundName = normalizeRoundName(rawRound);
     const currentMatches = acc[roundName] || [];
-    const matchNumber = Number(row.matchNumber ?? row.matchnumber ?? currentMatches.length + 1);
+    const sourceMatchNumber = Number(readRowValue(row, ['matchNumber', 'matchnumber', 'match_number'], 1));
+    const winnerFromMatches = matchWinnerLookup.get(
+      `${roundName}|${Number.isFinite(sourceMatchNumber) ? sourceMatchNumber : ''}`
+    );
 
     if (!acc[roundName]) {
       acc[roundName] = [];
     }
 
     acc[roundName].push({
-      matchNumber: Number.isFinite(matchNumber) ? matchNumber : currentMatches.length + 1,
-      player1: String(row.player1 ?? 'TBD').trim() || 'TBD',
-      player2: String(row.player2 ?? 'TBD').trim() || 'TBD',
-      winner: String(row.winner ?? '').trim(),
-      laglagan: String(row.laglagan ?? row.lagLagan ?? row.eliminated ?? '').trim(),
+      sourceMatchNumber: Number.isFinite(sourceMatchNumber) ? sourceMatchNumber : currentMatches.length + 1,
+      player1: cleanText(readRowValue(row, ['player1', 'p1'], 2)),
+      player2: cleanText(readRowValue(row, ['player2', 'p2'], 3)),
+      winner: cleanWinner(readRowValue(row, ['winner'], 4)) || winnerFromMatches,
+      laglagan: cleanText(readRowValue(row, ['laglagan', 'lagLagan', 'eliminated'], 5), ''),
     });
 
     return acc;
@@ -1407,31 +1466,31 @@ async function renderBracket() {
 
   const buildMatch = (matchNumber, match) => ({
     matchNumber,
-    player1: String(match?.player1 ?? 'TBD').trim() || 'TBD',
-    player2: String(match?.player2 ?? 'TBD').trim() || 'TBD',
-    winner: String(match?.winner ?? '').trim(),
-    laglagan: String(match?.laglagan ?? match?.lagLagan ?? match?.eliminated ?? '').trim(),
+    sourceMatchNumber: Number(match?.sourceMatchNumber ?? matchNumber),
+    player1: cleanText(match?.player1),
+    player2: cleanText(match?.player2),
+    winner: cleanWinner(match?.winner),
+    laglagan: cleanText(match?.laglagan, ''),
   });
 
   const rounds = roundOrder.map((name) => {
     const expectedCount = roundSizes[name] || 0;
-    const matches = (groupedRounds[name] || []).sort((a, b) => a.matchNumber - b.matchNumber);
-    const matchMap = new Map(matches.map((match) => [match.matchNumber, match]));
+    const matches = (groupedRounds[name] || []).sort((a, b) => a.sourceMatchNumber - b.sourceMatchNumber);
 
     return {
       name,
-      matches: Array.from({ length: expectedCount }, (_, index) => buildMatch(index + 1, matchMap.get(index + 1))),
+      matches: Array.from({ length: expectedCount }, (_, index) => buildMatch(index + 1, matches[index])),
     };
   });
 
   const advanceWinner = (match) => {
-    const winner = String(match?.winner ?? '').trim();
+    const winner = cleanWinner(match?.winner);
     if (winner) {
       return winner;
     }
 
-    const player1 = String(match?.player1 ?? '').trim();
-    const player2 = String(match?.player2 ?? '').trim();
+    const player1 = cleanText(match?.player1, '');
+    const player2 = cleanText(match?.player2, '');
     const isBye = (value) => /^(bye|automatic advance|auto advance)$/i.test(value);
 
     if (player1 && isBye(player2)) {
