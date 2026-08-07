@@ -32,6 +32,9 @@ const pageTitles = {
   announcements: 'Announcements',
 };
 const PH_TIMEZONE = 'Asia/Manila';
+const LIVE_REFRESH_INTERVAL_MS = 30000;
+
+let liveRefreshInFlight = false;
 
 // dvb shared layout helper
 
@@ -520,6 +523,112 @@ function initRubyBerryEasterEgg() {
   });
 }
 
+function snapshotLivePageState() {
+  const state = {
+    scrollY: window.scrollY,
+  };
+
+  if (page === 'players') {
+    state.playerSearch = document.querySelector('#player-search')?.value ?? '';
+  }
+
+  if (page === 'schedule') {
+    state.filterSearch = document.querySelector('#filter-search')?.value ?? '';
+    state.filterRound = document.querySelector('#filter-round')?.value ?? '';
+    state.filterStatus = document.querySelector('#filter-status')?.value ?? '';
+    state.filterCourt = document.querySelector('#filter-court')?.value ?? '';
+  }
+
+  return state;
+}
+
+function restoreLivePageState(state = {}) {
+  if (page === 'players' && typeof state.playerSearch === 'string') {
+    const search = document.querySelector('#player-search');
+    if (search) {
+      search.value = state.playerSearch;
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  if (page === 'schedule') {
+    const search = document.querySelector('#filter-search');
+    const round = document.querySelector('#filter-round');
+    const status = document.querySelector('#filter-status');
+    const court = document.querySelector('#filter-court');
+
+    if (search && typeof state.filterSearch === 'string') {
+      search.value = state.filterSearch;
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    if (round && typeof state.filterRound === 'string') {
+      round.value = state.filterRound;
+      round.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (status && typeof state.filterStatus === 'string') {
+      status.value = state.filterStatus;
+      status.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (court && typeof state.filterCourt === 'string') {
+      court.value = state.filterCourt;
+      court.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: state.scrollY || 0, behavior: 'auto' });
+  });
+}
+
+async function refreshLivePage() {
+  if (liveRefreshInFlight || document.hidden) {
+    return;
+  }
+
+  liveRefreshInFlight = true;
+  const state = snapshotLivePageState();
+
+  try {
+    const renderer = renderers[page];
+
+    if (typeof renderer === 'function') {
+      await renderer();
+    }
+
+    getTournamentSettings()
+      .then((settingsRaw) => {
+        renderShell(toObject(settingsRaw));
+      })
+      .catch(() => {
+        // Keep the current shell if the sheet request fails.
+      });
+  } catch (error) {
+    console.warn('Live refresh failed', error);
+  } finally {
+    liveRefreshInFlight = false;
+    restoreLivePageState(state);
+  }
+}
+
+function startLiveRefresh() {
+  window.setInterval(() => {
+    if (!document.hidden) {
+      refreshLivePage();
+    }
+  }, LIVE_REFRESH_INTERVAL_MS);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshLivePage();
+    }
+  });
+
+  window.addEventListener('focus', refreshLivePage);
+}
+
 // ---------------------------------------------------------------------------
 // DVB Home page
 // ---------------------------------------------------------------------------
@@ -618,14 +727,6 @@ async function renderHome() {
             of precision, pressure, and championship tennis.
             </p>
           <div class="hero-actions">
-            <a
-              class="button button-primary"
-              href="https://bit.ly/45vG1QQ"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Register now <span></span>
-            </a>
             <a class="button button-primary" href="schedule.html">
               View schedule <span></span>
             </a>
@@ -1685,6 +1786,7 @@ async function initializeSite() {
     });
 
   initScrollReveal();
+  startLiveRefresh();
 }
 
 const renderers = {
