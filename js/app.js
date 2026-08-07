@@ -307,12 +307,14 @@ const formatMatchScore = (match) => {
   const p1 = String(match?.P1_Score ?? match?.p1_score ?? '').trim();
   const p2 = String(match?.P2_Score ?? match?.p2_score ?? '').trim();
   const legacyScore = String(match?.score ?? '').trim();
+  const hasRawScore = Boolean(p1 || p2 || legacyScore);
 
   if (p1 || p2) {
     return {
       p1: escapeHtml(p1 || '-'),
       p2: escapeHtml(p2 || '-'),
       text: escapeHtml(`${p1 || '-'} - ${p2 || '-'}`),
+      hasRawScore,
     };
   }
 
@@ -320,6 +322,7 @@ const formatMatchScore = (match) => {
     p1: '',
     p2: '',
     text: escapeHtml(legacyScore || '-'),
+    hasRawScore,
   };
 };
 
@@ -1545,6 +1548,9 @@ async function renderResults() {
 
   const card = (match) => {
     const score = formatMatchScore(match);
+    const hasScore = Boolean(score.hasRawScore);
+    const leftScore = score.p1 || score.text || '-';
+    const rightScore = score.p2 || (hasScore ? (match.status === 'Live' ? 'Current' : match.winner === match.player2 ? 'Winner' : 'Final') : '-');
 
     return `
     <article class="result-card">
@@ -1555,12 +1561,12 @@ async function renderResults() {
 
       <div class="score-line ${match.winner === match.player1 ? 'winner' : ''}">
         <span>${match.player1}</span>
-        <strong>${score.p1 || score.text}</strong>
+        <strong>${leftScore}</strong>
       </div>
 
       <div class="score-line ${match.winner === match.player2 ? 'winner' : ''}">
         <span>${match.player2}</span>
-        <strong>${score.p2 || (match.status === 'Live' ? 'Current' : match.winner === match.player2 ? 'Winner' : 'Final')}</strong>
+        <strong>${rightScore}</strong>
       </div>
 
       <div class="result-foot">
