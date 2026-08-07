@@ -390,7 +390,7 @@ function hideLoadingState() {
   document.querySelector('#loading-overlay')?.remove();
 }
 
-function openModal(content) {
+function openModal(content, options = {}) {
   const modal = document.querySelector('#detail-modal');
 
   if (!modal) {
@@ -409,6 +409,7 @@ function openModal(content) {
   const close = () => {
     modal.hidden = true;
     document.body.style.overflow = '';
+    options.onClose?.();
   };
 
   modal.querySelector('.modal-close').addEventListener('click', close);
@@ -454,7 +455,7 @@ function rubyBerryEasterEggMarkup() {
 
   return `
     <div class="easteregg-copy">
-      <h2 class="modal-title">I LOVE YOU BERT MARCELO</h2>
+      <h2 class="modal-title">I LOVE YOU, BERT MARCELO</h2>
       <p class="easteregg-signoff">-Ruby Berry</p>
     </div>
 
@@ -484,12 +485,14 @@ function rubyBerryEasterEggMarkup() {
 }
 
 function initRubyBerryEasterEgg() {
-  if (page !== 'home') {
-    return;
-  }
-
   document.addEventListener('keydown', (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    const editableTarget = event.target?.closest?.('input, textarea, select, [contenteditable="true"]');
+
+    if (editableTarget) {
       return;
     }
 
@@ -507,7 +510,12 @@ function initRubyBerryEasterEgg() {
     if (!rubyBerryEggTriggered && rubyBerryBuffer === 'rubyberry') {
       rubyBerryEggTriggered = true;
       rubyBerryBuffer = '';
-      openModal(rubyBerryEasterEggMarkup());
+      openModal(rubyBerryEasterEggMarkup(), {
+        onClose: () => {
+          rubyBerryEggTriggered = false;
+          rubyBerryBuffer = '';
+        },
+      });
     }
   });
 }
