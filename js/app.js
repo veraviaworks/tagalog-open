@@ -1545,6 +1545,7 @@ async function renderResults() {
   const matches = await getMatches();
   const live = matches.filter((match) => match.status === 'Live');
   const completed = matches.filter((match) => match.status === 'Completed');
+  const search = document.querySelector('#results-search');
 
   const card = (match) => {
     const score = formatMatchScore(match);
@@ -1574,24 +1575,54 @@ async function renderResults() {
         <button class="text-button" data-match="${match.id}">Match details -></button>
       </div>
     </article>
-  `;
+    `;
   };
 
-  const render = (selector, list, label) => {
-    const element = document.querySelector(selector);
+  const matchesSearch = (match, term) => {
+    if (!term) {
+      return true;
+    }
 
-    element.innerHTML = list.length
-      ? list.map(card).join('')
+    const haystack = [
+      match.id,
+      match.round,
+      match.court,
+      match.player1,
+      match.player2,
+      match.winner,
+      match.note,
+      match.status,
+      match.displayDate,
+      match.time,
+    ]
+      .map((value) => String(value ?? '').toLowerCase())
+      .join(' ');
+
+    return haystack.includes(term);
+  };
+
+  const render = (selector, list, label, term = '') => {
+    const element = document.querySelector(selector);
+    const filteredList = label === 'completed results' ? list.filter((match) => matchesSearch(match, term)) : list;
+
+    element.innerHTML = filteredList.length
+      ? filteredList.map(card).join('')
       : `
           <div class="empty-state" style="grid-column: 1 / -1">
-            <strong>No ${label}</strong>
-            Check back when play gets underway.
+            <strong>${term ? 'No matches found' : `No ${label}`}</strong>
+            ${term ? 'Try a different player name, round, court, or winner.' : 'Check back when play gets underway.'}
           </div>
         `;
   };
 
+  const drawCompleted = () => {
+    render('#completed-results', completed, 'completed results', String(search?.value ?? '').trim().toLowerCase());
+  };
+
   render('#live-results', live, 'live matches');
-  render('#completed-results', completed, 'completed results');
+  drawCompleted();
+
+  search?.addEventListener('input', drawCompleted);
 
   document.querySelectorAll('[data-match]').forEach((button) => {
     button.onclick = () => {
