@@ -348,6 +348,9 @@ const loadingPageLabels = {
   announcements: 'the announcements',
 };
 
+let rubyBerryEggTriggered = false;
+let rubyBerryBuffer = '';
+
 function showLoadingState(pageName = 'page') {
   if (document.querySelector('#loading-overlay')) {
     return;
@@ -443,6 +446,70 @@ function announcementModalMarkup(announcement) {
     <h2 class="modal-title">${announcement.title}</h2>
     <p>${announcement.content}</p>
   `;
+}
+
+function rubyBerryEasterEggMarkup() {
+  const youtubeEmbedUrl = 'https://www.youtube.com/embed/1zfhU8YBBAA?rel=0&playsinline=1';
+  const youtubeWatchUrl = 'https://www.youtube.com/watch?v=1zfhU8YBBAA&list=RD1zfhU8YBBAA&start_radio=1';
+
+  return `
+    <div class="easteregg-copy">
+      <h2 class="modal-title">I LOVE YOU BERT MARCELO</h2>
+      <p class="easteregg-signoff">-Ruby Berry</p>
+    </div>
+
+    <div class="easteregg-video-wrap">
+      <iframe
+        class="easteregg-video"
+        src="${youtubeEmbedUrl}"
+        title="Ruby Berry easter egg video"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <div class="easteregg-actions">
+      <a
+        class="button button-secondary"
+        href="${youtubeWatchUrl}"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        Open on YouTube
+      </a>
+    </div>
+  `;
+}
+
+function initRubyBerryEasterEgg() {
+  if (page !== 'home') {
+    return;
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      rubyBerryBuffer = '';
+      return;
+    }
+
+    if (event.key.length !== 1) {
+      return;
+    }
+
+    rubyBerryBuffer = `${rubyBerryBuffer}${event.key.toLowerCase()}`.slice(-9);
+
+    if (!rubyBerryEggTriggered && rubyBerryBuffer === 'rubyberry') {
+      rubyBerryEggTriggered = true;
+      rubyBerryBuffer = '';
+      openModal(rubyBerryEasterEggMarkup());
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1583,6 +1650,7 @@ async function initializeSite() {
   // Draw the shared layout immediately so the page feels responsive.
   renderShell({});
   showLoadingState(page);
+  initRubyBerryEasterEgg();
 
   // Then the app chooses the correct page renderer.
   const renderer = renderers[page];
